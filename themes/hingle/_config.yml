@@ -1,0 +1,22 @@
+author: 'Pkqa' # 作者名称
+author_avatar: 'https://s11.ax1x.com/2024/02/09/pF33Yq0.jpg' # 作者头像
+author_text: '一名来自山东滨州的高中生，喜欢听音乐，玩MC' # 作者信息
+social: # 社交链接
+  - title: 'QQ:3414944518'
+    icon: 'qq'
+    link: 'tencent://AddContact/?fromId=45&fromSubId=1&subcmd=all&uin=3414944518&website=www.oicqzone.com'
+  - title: 'Github'
+    icon: 'github'
+    link: 'https://github.com/glorypkqa'
+  - title: 'E-mail:glorypkqa@gmail.com'
+    icon: 'envelope'
+    link: 'mailto:glorypkqa@gmail.com'
+  - title: 'Bilibili'
+    icon: 'youtube-play'
+    link: 'https://space.bilibili.com/1657868367?spm_id_from=333.788.0.0'
+background: 'https://api.paugram.com/wallpaper?source=gh' # 主题背景
+menu: # 页眉菜单项目
+  '关于我': /about
+config:
+  copyright: true # 复制的时候弹出保留原站链接说明
+  night: true # 自动切换夜间模式
