@@ -102,5 +102,5 @@ theme: hingle
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
   type: git
-  repo: https://github.com/GloryPkqa/glorypkqa.github.io.git
+  repo: git@github.com:GloryPkqa/glorypkqa.github.io.git
   branch: main
