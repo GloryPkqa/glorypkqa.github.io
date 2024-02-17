@@ -103,5 +103,5 @@ theme: hingle
 #  repo: git@github.com:GloryPkqa/glorypkqa.github.io.git
 deploy:
   type: git
-  repo: git@github.com:GloryPkqa/glorypkqa.github.io.git
+  repo: https://github.com/GloryPkqa/glorypkqa.github.io.git
   branch: main
