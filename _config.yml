@@ -104,6 +104,5 @@ deploy:
   type: git
   repo: https://github.com/GloryPkqa/glorypkqa.github.io.git
   branch: main
-  message: "Site updated: {{ now('YYYY-MM-DD HH:mm:ss') }}"
   extend_dirs:
     - .deploy_git
