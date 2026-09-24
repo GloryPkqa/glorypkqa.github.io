@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import "./preview.css";
 
 const siteUrl = "https://pkqa.top/";
 

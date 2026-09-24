@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, useScroll } from "framer-motion";
 import { useEffect, useState, type MouseEvent } from "react";
 import { interests } from "@/data/interests";
 import { socials } from "@/data/socials";
@@ -17,6 +17,7 @@ const rise = {
 export default function SiteExperience() {
   const [scrolled, setScrolled] = useState(false);
   const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll();
   const reveal = reduceMotion ? { hidden: { opacity: 1, y: 0 }, visible: { opacity: 1, y: 0 } } : rise;
 
   useEffect(() => {
@@ -39,27 +40,36 @@ export default function SiteExperience() {
       <div className="ambient-glow ambient-one" aria-hidden="true" />
       <div className="ambient-glow ambient-two" aria-hidden="true" />
 
-      <header className={`site-header${scrolled ? " is-scrolled" : ""}`}>
-        <a className="wordmark" href="#home" aria-label="Pkqa Center 首页"><span className="mark"><Image src="/avatar.jpg" alt="" width={34} height={34} /></span><span>Pkqa<span className="wordmark-light"> Center</span></span></a>
+      <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
+        <a className="wordmark" href="#home" aria-label="Pkqa Center 首页"><span className="mark"><Image src="/avatar.jpg" alt="" width={38} height={38} /></span><span>Pkqa<span className="wordmark-light"> Center.</span></span></a>
         <nav className="desktop-nav" aria-label="主导航">
           <a href="#home">首页</a><a href="#about">关于</a><a href="#interests">兴趣</a><a href="#links">链接</a>
         </nav>
-        <ThemeToggle />
+        <div className="header-actions"><span className="header-status"><span className="status-dot" /> MY LITTLE SPACE</span><ThemeToggle /></div>
+        <motion.span className="scroll-progress" style={{ scaleX: scrollYProgress }} aria-hidden="true" />
       </header>
+      <nav className="mobile-nav" aria-label="手机导航"><a href="#home">首页</a><a href="#about">关于</a><a href="#interests">兴趣</a><a href="#links">链接</a></nav>
 
       <section className="hero section-wrap" id="home">
+        <span className="hero-watermark" aria-hidden="true">PKQA</span>
         <motion.div className="hero-content" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: reduceMotion ? 0 : 0.12, delayChildren: reduceMotion ? 0 : 0.12 } } }}>
-          <motion.div className="hero-kicker" variants={reveal}><span className="status-dot" /> WELCOME TO MY INTERNET HOME</motion.div>
-          <motion.h1 variants={reveal}>Pkqa <span>Center</span><i className="title-period">.</i></motion.h1>
-          <motion.p className="hero-subtitle" variants={reveal}>欢迎来到我的一小块互联网空间。<br /><span>玩游戏、听音乐，也偶尔折腾点有意思的东西。</span></motion.p>
+          <motion.div className="hero-kicker" variants={reveal}><span className="kicker-line" /> WELCOME TO MY INTERNET HOME</motion.div>
+          <motion.h1 variants={reveal}>Pkqa<span>Center<i className="title-period">.</i></span></motion.h1>
+          <motion.p className="hero-subtitle" variants={reveal}>欢迎来到我的一小块互联网空间。</motion.p>
+          <motion.p className="hero-description" variants={reveal}>玩游戏、听音乐，也偶尔折腾点有意思的东西。</motion.p>
           <motion.div className="hero-actions" variants={reveal}>
-            <a className="primary-link" href="#about">随便逛逛 <span aria-hidden="true">↓</span></a>
+            <a className="primary-link" href="#about">随便逛逛 <span aria-hidden="true">↘</span></a>
             <span className="hero-handle">PERSONAL SPACE <b>·</b> BY GLORYPKQA</span>
           </motion.div>
         </motion.div>
-        <motion.div className="hero-aside" initial={reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduceMotion ? 0 : 0.72, duration: reduceMotion ? 0 : 0.7 }} aria-label="网站主人的兴趣">
-          <div className="aside-orbit" aria-hidden="true"><span /><span /><span /></div>
-          <div className="aside-caption"><span>MADE OF</span><strong>games, songs<br />& small curiosities</strong><span className="aside-location">A LITTLE SPACE ON THE WEB <b>✳</b></span></div>
+        <motion.div className="hero-visual" initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: reduceMotion ? 0 : 0.5, duration: reduceMotion ? 0 : 0.9 }} aria-label="GloryPkqa 的头像">
+          <div className="visual-orbit" aria-hidden="true" />
+          <div className="visual-orbit visual-orbit-inner" aria-hidden="true" />
+          <div className="portrait-frame"><Image src="/avatar.jpg" alt="GloryPkqa 的卡通头像" width={360} height={360} /></div>
+          <span className="visual-spark visual-spark-one" aria-hidden="true">✳</span>
+          <span className="visual-spark visual-spark-two" aria-hidden="true">✦</span>
+          <span className="visual-note visual-note-top">GAMES · MUSIC · CODE</span>
+          <span className="visual-note visual-note-bottom">a little space on the web ↗</span>
         </motion.div>
         <div className="hero-bottom"><span>SCROLL TO EXPLORE</span><span className="scroll-stem" /><LiveClock /></div>
       </section>
@@ -86,7 +96,7 @@ export default function SiteExperience() {
         <div className="interest-grid">
           {interests.map((interest, index) => (
             <motion.article className={`interest-card tone-${interest.tone}`} key={interest.name} variants={reveal} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} transition={{ delay: reduceMotion ? 0 : index * 0.08 }} whileHover={reduceMotion ? undefined : { y: -4, transition: { duration: 0.22 } }}>
-              <div className="interest-card-top"><span className="interest-symbol" aria-hidden="true">{interest.symbol}</span></div>
+              <div className="interest-card-top"><span className="interest-symbol" aria-hidden="true">{interest.symbol}</span><span className="interest-shine" aria-hidden="true" /></div>
               <div className="interest-card-copy"><span className="interest-english">{interest.english}</span><h3>{interest.name}</h3><p>{interest.description}</p></div>
               <span className="interest-card-mark" aria-hidden="true">↗</span>
             </motion.article>
