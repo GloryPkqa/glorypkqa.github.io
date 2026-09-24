@@ -48,10 +48,8 @@ export default function SiteExperience() {
         <div className="header-actions"><span className="header-status"><span className="status-dot" /> MY LITTLE SPACE</span><ThemeToggle /></div>
         <motion.span className="scroll-progress" style={{ scaleX: scrollYProgress }} aria-hidden="true" />
       </header>
-      <nav className="mobile-nav" aria-label="手机导航"><a href="#home">首页</a><a href="#about">关于</a><a href="#interests">兴趣</a><a href="#links">链接</a></nav>
 
       <section className="hero section-wrap" id="home">
-        <span className="hero-watermark" aria-hidden="true">PKQA</span>
         <motion.div className="hero-content" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: reduceMotion ? 0 : 0.12, delayChildren: reduceMotion ? 0 : 0.12 } } }}>
           <motion.div className="hero-kicker" variants={reveal}><span className="kicker-line" /> WELCOME TO MY INTERNET HOME</motion.div>
           <motion.h1 variants={reveal}>Pkqa<span>Center<i className="title-period">.</i></span></motion.h1>
@@ -62,14 +60,9 @@ export default function SiteExperience() {
             <span className="hero-handle">PERSONAL SPACE <b>·</b> BY GLORYPKQA</span>
           </motion.div>
         </motion.div>
-        <motion.div className="hero-visual" initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: reduceMotion ? 0 : 0.5, duration: reduceMotion ? 0 : 0.9 }} aria-label="GloryPkqa 的头像">
-          <div className="visual-orbit" aria-hidden="true" />
-          <div className="visual-orbit visual-orbit-inner" aria-hidden="true" />
-          <div className="portrait-frame"><Image src="/avatar.jpg" alt="GloryPkqa 的卡通头像" width={360} height={360} /></div>
-          <span className="visual-spark visual-spark-one" aria-hidden="true">✳</span>
-          <span className="visual-spark visual-spark-two" aria-hidden="true">✦</span>
-          <span className="visual-note visual-note-top">GAMES · MUSIC · CODE</span>
-          <span className="visual-note visual-note-bottom">a little space on the web ↗</span>
+        <motion.div className="hero-aside" initial={reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduceMotion ? 0 : 0.55, duration: reduceMotion ? 0 : 0.7 }} aria-label="网站主人的兴趣">
+          <div className="aside-orbit" aria-hidden="true"><span /><span /><span /></div>
+          <div className="aside-caption"><span>MADE OF</span><strong>games, songs<br />& small curiosities</strong><span className="aside-location">A LITTLE SPACE ON THE WEB <b>✳</b></span></div>
         </motion.div>
         <div className="hero-bottom"><span>SCROLL TO EXPLORE</span><span className="scroll-stem" /><LiveClock /></div>
       </section>
