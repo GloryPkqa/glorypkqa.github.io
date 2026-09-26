@@ -8,6 +8,7 @@ import { socials } from "@/data/socials";
 import LiveClock from "@/components/LiveClock";
 import QuoteSwitcher from "@/components/QuoteSwitcher";
 import ThemeToggle from "@/components/ThemeToggle";
+import SecretDot from "@/components/SecretDot";
 
 const rise = {
   hidden: { opacity: 0, y: 18 },
@@ -52,7 +53,7 @@ export default function SiteExperience() {
       <section className="hero section-wrap" id="home">
         <motion.div className="hero-content" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: reduceMotion ? 0 : 0.12, delayChildren: reduceMotion ? 0 : 0.12 } } }}>
           <motion.div className="hero-kicker" variants={reveal}><span className="kicker-line" /> WELCOME TO MY INTERNET HOME</motion.div>
-          <motion.h1 variants={reveal}>Pkqa<span>Center<i className="title-period">.</i></span></motion.h1>
+          <motion.h1 variants={reveal} aria-label="Pkqa Center">Pkqa<span>Center<SecretDot /></span></motion.h1>
           <motion.p className="hero-subtitle" variants={reveal}>欢迎来到我的一小块互联网空间。</motion.p>
           <motion.p className="hero-description" variants={reveal}>玩游戏、听音乐，也偶尔折腾点有意思的东西。</motion.p>
           <motion.div className="hero-actions" variants={reveal}>
