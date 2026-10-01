@@ -3,7 +3,7 @@ import { versionAtLeast } from "@/lib/mc/give";
 export type LootEntry = { item: string; weight: number; count: number };
 export type PackInput = {
   version: string; title: string; description: string; namespace: string;
-  recipeEnabled: boolean; recipeName: string; recipeType: "shaped" | "shapeless"; grid: string[]; result: string; resultCount: number;
+  recipeEnabled: boolean; recipeName: string; recipeType: "shaped" | "shapeless"; grid: string[]; result: string; resultCount: number; resultComponents?: Record<string, unknown>;
   lootEnabled: boolean; lootName: string; rolls: number; loot: LootEntry[];
   validItems: Set<string>;
 };
@@ -29,6 +29,7 @@ export function createDataPackFiles(input: PackInput) {
   const materials = grid.filter(Boolean);
   if (input.recipeEnabled) {
     if (!hasItem(input.result)) errors.push("配方产物不在当前版本的物品目录中。");
+    if (input.resultComponents && Object.keys(input.resultComponents).length && !versionAtLeast(input.version, "1.20.5")) errors.push("当前版本的工作台配方不支持带属性的产物。");
     if (!materials.length) errors.push("请至少放入一种配方材料。");
     if (materials.some((item) => !hasItem(item))) errors.push("配方中有不属于当前版本的材料。");
     if (!Number.isInteger(input.resultCount) || input.resultCount < 1 || input.resultCount > 64) errors.push("配方产物数量需为 1–64。");
@@ -47,9 +48,10 @@ export function createDataPackFiles(input: PackInput) {
   const folder = versionAtLeast(input.version, "1.21") ? { recipe: "recipe", loot: "loot_table" } : { recipe: "recipes", loot: "loot_tables" };
 
   if (input.recipeEnabled) {
-    const result = versionAtLeast(input.version, "1.20.5")
+    const result: Record<string, unknown> = versionAtLeast(input.version, "1.20.5")
       ? { id: `minecraft:${itemId(input.result)}`, count: input.resultCount }
       : { item: `minecraft:${itemId(input.result)}`, count: input.resultCount };
+    if (input.resultComponents && Object.keys(input.resultComponents).length) result.components = input.resultComponents;
     const ingredient = (id: string) => versionAtLeast(input.version, "1.21.2") ? `minecraft:${id}` : { item: `minecraft:${id}` };
     let recipe: Record<string, unknown>;
     if (input.recipeType === "shapeless") {

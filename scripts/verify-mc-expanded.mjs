@@ -16,6 +16,7 @@ function loadTs(relative, imports = {}) {
 const give = loadTs("../src/lib/mc/give.ts");
 const banner = loadTs("../src/lib/mc/banner.ts");
 const pack = loadTs("../src/lib/mc/datapack.ts", { "@/lib/mc/give": give });
+const giveRecipe = loadTs("../src/lib/mc/give-recipe.ts", { "@/lib/mc/give": give });
 const zip = loadTs("../src/lib/mc/zip.ts");
 
 for (const version of give.MC_VERSIONS) {
@@ -54,4 +55,22 @@ for (const [version, format, recipeFolder, lootFolder] of [["1.16.5", 6, "recipe
   assert.equal(new DataView(bytes.buffer).getUint32(bytes.length - 22, true), 0x06054b50);
 }
 assert.ok(pack.createDataPackFiles({ ...input, version: "1.16.5", result: "mace" }).errors.length);
+for (const version of ["1.20.6", "1.21.5", "1.21.8", "26.1"]) {
+  const command = give.makeGiveCommand({ version, item: "diamond_sword", count: 2, target: "@p", name: "冒险者's 刀", lore: ["火焰, 寒冰", "路径\\test"], unbreakable: true, enchantments: [{ name: "sharpness", level: 5 }] });
+  const imported = giveRecipe.importGiveForRecipe(command, version);
+  assert.equal(imported.item, "diamond_sword");
+  assert.equal(imported.count, 2);
+  assert.deepEqual(Object.keys(imported.components).sort(), ["minecraft:custom_name", "minecraft:enchantments", "minecraft:lore", "minecraft:unbreakable"].sort());
+  assert.deepEqual(imported.components["minecraft:enchantments"], version === "1.20.6" ? { levels: { "minecraft:sharpness": 5 } } : { "minecraft:sharpness": 5 });
+  const generated = pack.createDataPackFiles({ ...input, version, result: imported.item, resultCount: imported.count, resultComponents: imported.components });
+  assert.deepEqual(generated.errors, []);
+  const recipe = JSON.parse(generated.files.find((file) => file.name.endsWith("sword.json")).content);
+  assert.deepEqual(recipe.result.components, imported.components);
+  assert.equal(recipe.result.count, 2);
+}
+assert.throws(() => giveRecipe.importGiveForRecipe(give.makeGiveCommand({ version: "1.16.5", item: "diamond_sword", count: 1, target: "@p", name: "旧版", lore: [], unbreakable: false, enchantments: [] }), "1.16.5"), /不能直接生成带属性/);
+assert.throws(() => giveRecipe.importGiveForRecipe("/give @p minecraft:diamond_sword[damage=3] 1", "1.21.8"), /暂不支持导入/);
+const bookCommand = give.makeGiveCommand({ version: "1.21.8", item: "enchanted_book", count: 1, target: "@s", name: "", lore: [], unbreakable: false, enchantments: [{ name: "mending", level: 1 }] });
+assert.deepEqual(giveRecipe.importGiveForRecipe(bookCommand, "1.21.8").components["minecraft:stored_enchantments"], { "minecraft:mending": 1 });
+assert.ok(pack.createDataPackFiles({ ...input, version: "1.16.5", resultComponents: { "minecraft:unbreakable": {} } }).errors.some((error) => error.includes("不支持带属性")));
 console.log("MC expanded version, banner, data pack and ZIP fixtures passed.");
