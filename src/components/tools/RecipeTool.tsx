@@ -31,7 +31,7 @@ export default function RecipeTool({ version, catalog }: { version: string; cata
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("all");
   const [subcategory, setSubcategory] = useState("all");
-  const [limit, setLimit] = useState(48);
+  const [limit, setLimit] = useState(36);
   const itemId = item.trim().toLowerCase().replace(/^minecraft:/, "");
   const itemMap = useMemo(() => new Map(catalog?.items.map((entry) => [entry.name, entry]) ?? []), [catalog]);
   const craftable = useMemo(() => catalog?.items.filter((entry) => !!catalog.recipes?.[entry.name]?.length) ?? [], [catalog]);
@@ -50,6 +50,13 @@ export default function RecipeTool({ version, catalog }: { version: string; cata
 
   function selectItem(id: string) { setItem(id); setVariant(0); }
 
+  function jumpTo(id: string) {
+    document.getElementById(id)?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      block: "start",
+    });
+  }
+
   function ingredient(id: string, key: string) {
     const entry = itemMap.get(id);
     return <div className="mc-recipe-ingredient" key={key} title={`${entry?.displayNameZh ?? id} · ${entry?.displayName ?? id}`}><ItemIcon key={id} id={id} item={entry} size={34} /><strong>{entry?.displayNameZh ?? id}</strong><small>{entry?.displayName ?? id}</small></div>;
@@ -58,22 +65,22 @@ export default function RecipeTool({ version, catalog }: { version: string; cata
   return <section className="mc-section" id="recipes" aria-labelledby="recipes-heading">
     <div className="mc-section-header"><div><span className="mc-overline">10 / CRAFTING TABLE</span><h2 id="recipes-heading">工作台配方<span>查询器</span></h2></div><span className="mc-section-mark" aria-hidden="true">⊞</span></div>
     <p className="mc-section-description">按大类、小类或中英文名称浏览合成产物。点选带图标的物品卡片，查看九宫格与替代配方。</p>
-    <div className="mc-lab-grid"><div className="mc-form-panel"><div className="mc-form-section-label"><span>01</span> 查找产物</div>
-      <label className="mc-field"><span>搜索名称或物品 ID <small>中文 / ENGLISH</small></span><input value={query} onChange={(event) => { setQuery(event.target.value); setLimit(48); }} spellCheck={false} autoComplete="off" placeholder="例如：钻石镐 / Diamond Pickaxe" /></label>
-      <div className="mc-recipe-groups" role="group" aria-label="配方大类">{GROUPS.map((entry) => <button key={entry.id} type="button" className={group === entry.id ? "active" : ""} aria-pressed={group === entry.id} onClick={() => { setGroup(entry.id); setSubcategory("all"); setQuery(""); setLimit(48); }}>{entry.label}<small>{entry.id === "all" ? craftable.length : craftable.filter((item) => (entry.categories as readonly string[]).includes(item.category)).length}</small></button>)}</div>
-      {group !== "all" && <div className="mc-recipe-subgroups" role="group" aria-label="配方小类"><button type="button" className={subcategory === "all" ? "active" : ""} aria-pressed={subcategory === "all"} onClick={() => { setSubcategory("all"); setLimit(48); }}>全部</button>{activeGroup.categories.map((category) => <button type="button" key={category} className={subcategory === category ? "active" : ""} aria-pressed={subcategory === category} onClick={() => { setSubcategory(category); setLimit(48); }}>{SUBCATEGORY_NAMES[category] ?? category}</button>)}</div>}
+    <div className="mc-lab-grid mc-recipe-layout"><div className="mc-form-panel" id="mc-recipe-explorer"><div className="mc-form-section-label"><span>01</span> 查找产物</div>
+      <label className="mc-field"><span>搜索名称或物品 ID <small>中文 / ENGLISH</small></span><input value={query} onChange={(event) => { setQuery(event.target.value); setLimit(36); }} spellCheck={false} autoComplete="off" placeholder="例如：钻石镐 / Diamond Pickaxe" /></label>
+      <div className="mc-recipe-groups" role="group" aria-label="配方大类">{GROUPS.map((entry) => <button key={entry.id} type="button" className={group === entry.id ? "active" : ""} aria-pressed={group === entry.id} onClick={() => { setGroup(entry.id); setSubcategory("all"); setQuery(""); setLimit(36); }}>{entry.label}<small>{entry.id === "all" ? craftable.length : craftable.filter((item) => (entry.categories as readonly string[]).includes(item.category)).length}</small></button>)}</div>
+      {group !== "all" && <div className="mc-recipe-subgroups" role="group" aria-label="配方小类"><button type="button" className={subcategory === "all" ? "active" : ""} aria-pressed={subcategory === "all"} onClick={() => { setSubcategory("all"); setLimit(36); }}>全部</button>{activeGroup.categories.map((category) => <button type="button" key={category} className={subcategory === category ? "active" : ""} aria-pressed={subcategory === category} onClick={() => { setSubcategory(category); setLimit(36); }}>{SUBCATEGORY_NAMES[category] ?? category}</button>)}</div>}
       <p className="mc-recipe-count">{search ? "全目录搜索" : `${activeGroup.label}${subcategory !== "all" ? ` / ${SUBCATEGORY_NAMES[subcategory]}` : ""}`} · {filtered.length} 种可合成物品</p>
-      <div className="mc-recipe-browser">{filtered.slice(0, limit).map((entry) => <button type="button" key={entry.name} className={itemId === entry.name ? "active" : ""} aria-pressed={itemId === entry.name} onClick={() => selectItem(entry.name)}><ItemIcon id={entry.name} item={entry} /><strong>{entry.displayNameZh}</strong><small>{entry.displayName}</small></button>)}</div>
+      <div className="mc-recipe-browser">{filtered.slice(0, limit).map((entry) => <button type="button" key={entry.name} className={itemId === entry.name ? "active" : ""} aria-pressed={itemId === entry.name} onClick={() => { selectItem(entry.name); jumpTo("mc-recipe-preview"); }}><ItemIcon id={entry.name} item={entry} /><strong>{entry.displayNameZh}</strong><small>{entry.displayName}</small></button>)}</div>
       {!filtered.length && <p className="mc-field-hint">这个范围没有收录的工作台配方，试试其他分类或搜索词。</p>}
-      {filtered.length > limit && <button type="button" className="mc-recipe-more" onClick={() => setLimit((previous) => previous + 48)}>显示更多物品 ↓</button>}
+      {filtered.length > limit && <button type="button" className="mc-recipe-more" onClick={() => setLimit((previous) => previous + 36)}>显示更多物品 ↓</button>}
       <div className="mc-form-section-label"><span>02</span> 当前产物</div><label className="mc-field"><span>物品 ID <small>可直接输入</small></span><input list="mc-recipe-item-list" value={item} onChange={(event) => selectItem(event.target.value)} spellCheck={false} autoComplete="off" /><datalist id="mc-recipe-item-list">{craftable.map((entry) => <option key={entry.name} value={entry.name} label={`${entry.displayNameZh} · ${entry.displayName}`} />)}</datalist><em>{itemData ? `${itemData.displayNameZh} · ${itemData.displayName}` : "请选择当前版本中的有效物品 ID"}</em></label>
       {recipe && <div className="mc-recipe-variant"><span>配方 {index + 1} / {recipes.length}</span><div><button type="button" disabled={index === 0} onClick={() => setVariant(index - 1)} aria-label="上一个配方">←</button><button type="button" disabled={index >= recipes.length - 1} onClick={() => setVariant(index + 1)} aria-label="下一个配方">→</button></div></div>}
       <p className="mc-field-hint">这里展示数据源收录的工作台配方；熔炉、切石机、锻造台、酿造台不在此列。数据源可能遗漏部分新配方。</p>
-    </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> CRAFTING PREVIEW</span><span>JAVA · {version}</span></div>
+    </div><aside className="mc-output-panel mc-color-output" id="mc-recipe-preview"><div className="mc-output-top"><span><i /> CRAFTING PREVIEW</span><span>JAVA · {version}</span></div>
       {recipe ? <><div className="mc-recipe-result"><ItemIcon key={itemId} id={itemId} item={itemData} size={46} /><div><strong>{itemData?.displayNameZh ?? itemId}</strong><small>{itemData?.displayName ?? itemId} · minecraft:{itemId}</small></div><b>× {recipe.count}</b></div>
         {recipe.shape ? <div className="mc-recipe-grid" aria-label="工作台九宫格">{Array.from({ length: 9 }, (_, position) => { const id = shape.find((cell) => cell.position === position + 1)?.ingredient; return id ? ingredient(id, `${position}-${id}`) : <div className="mc-recipe-empty-cell" key={position} aria-label="空格" />; })}</div> : <div className="mc-recipe-shapeless"><span>无序合成 · 材料位置不限</span><div>{recipe.ingredients?.map((id, position) => ingredient(id, `${position}-${id}`))}</div></div>}
       </> : <div className="mc-lookup-empty"><span>⊞</span><p>{!catalog ? "配方数据载入中…" : !itemData ? "请选择当前版本的有效物品 ID。" : "该物品没有收录的工作台配方。"}</p></div>}
-      <p className="mc-output-note">配方：PrismarineJS / minecraft-data；译名：Mojang 简体中文资源；图标：<a href="https://blockrender.dev/" target="_blank" rel="noopener noreferrer">Block Render ↗</a> 和 <a href="https://github.com/Webisso/minecraft-item-icons" target="_blank" rel="noopener noreferrer">Webisso ↗</a>。少量新版物品显示本站绘制的占位图；图标外观可能与所选游戏版本略有不同。</p>
+      <div className="mc-recipe-preview-foot"><p className="mc-output-note">配方：PrismarineJS / minecraft-data；译名：Mojang 简体中文资源；图标：<a href="https://blockrender.dev/" target="_blank" rel="noopener noreferrer">Block Render ↗</a> 和 <a href="https://github.com/Webisso/minecraft-item-icons" target="_blank" rel="noopener noreferrer">Webisso ↗</a>。少量新版物品显示本站绘制的占位图；图标外观可能与所选游戏版本略有不同。</p><a className="mc-recipe-return" href="#mc-recipe-explorer">继续找配方 ↑</a></div>
     </aside></div>
   </section>;
 }
