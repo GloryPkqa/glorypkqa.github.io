@@ -15,6 +15,8 @@ function sample(version, item = "diamond_sword") {
 }
 
 assert.match(sample("1.20.4"), /diamond_sword\{Enchantments:\[\{id:'minecraft:sharpness',lvl:5s\}\]/);
+assert.match(sample("1.16.5"), /diamond_sword\{Enchantments:\[\{id:'minecraft:sharpness',lvl:5s\}\]/);
+assert.match(sample("1.17"), /diamond_sword\{Enchantments:\[\{id:'minecraft:sharpness',lvl:5s\}\]/);
 assert.match(sample("1.20.4", "enchanted_book"), /StoredEnchantments:/);
 assert.match(sample("1.20.6"), /enchantments=\{levels:\{'minecraft:sharpness':5\}\}/);
 assert.match(sample("1.20.6"), /custom_name='\{"text":"星尘","italic":false\}'/);
@@ -25,4 +27,4 @@ assert.match(sample("26.1"), /custom_name=\{text:'星尘',italic:false\}/);
 assert.equal(makeGiveCommand({ version: "1.21.5", item: "stone", count: 1, target: "@s", name: "", lore: [], unbreakable: false, enchantments: [] }), "/give @s minecraft:stone 1");
 assert.match(makeGiveCommand({ version: "1.21.5", item: "stick", count: 1, target: "@p", name: "Traveler's \\ Map", lore: [], unbreakable: false, enchantments: [] }), /custom_name=\{text:'Traveler\\'s \\\\ Map',italic:false\}/);
 
-console.log("MC command fixtures passed for 1.20.4, 1.20.6, 1.21.5 and 26.1.");
+console.log("MC command fixtures passed for 1.16.5 through 26.1.");

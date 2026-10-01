@@ -18,7 +18,7 @@ const SUBCATEGORY_NAMES: Record<string, string> = {
   music: "音乐", misc: "杂项", spawn_eggs: "生物蛋",
 };
 
-function ItemIcon({ id, item, size = 36 }: { id: string; item?: McItem; size?: number }) {
+export function ItemIcon({ id, item, size = 36 }: { id: string; item?: McItem; size?: number }) {
   const [failed, setFailed] = useState(false);
   const url = item?.icon ? `https://blockrender.dev/render/item/${encodeURIComponent(id)}.png?size=64` : item?.iconUrl;
   if (!url || failed) return <span className="mc-recipe-icon-fallback" aria-hidden="true">{id.includes("chest") ? "▤" : id.includes("statue") ? "♟" : "▦"}</span>;

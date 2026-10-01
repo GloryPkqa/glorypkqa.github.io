@@ -5,23 +5,26 @@ import { join } from "node:path";
 const require = createRequire(import.meta.url);
 const minecraftData = require("minecraft-data");
 const output = join(process.cwd(), "public", "mc-data");
-const versions = ["1.20.4", "1.20.6", "1.21.5", "1.21.8", "26.1"];
+const versions = ["1.8.9", "1.12.2", "1.16.5", "1.17", "1.20.4", "1.20.6", "1.21.5", "1.21.8", "26.1"];
 const chinese = JSON.parse(await readFile(join(process.cwd(), "scripts", "mc-zh-cn.json"), "utf8"));
 const itemCategories = JSON.parse(await readFile(join(process.cwd(), "scripts", "mc-item-categories.json"), "utf8"));
 const fallbackIcons = JSON.parse(await readFile(join(process.cwd(), "scripts", "mc-fallback-icons.json"), "utf8"));
+const processingRecipes = JSON.parse(await readFile(join(process.cwd(), "scripts", "mc-processing-recipes.json"), "utf8"));
+const oldProcessingRecipes = JSON.parse(await readFile(join(process.cwd(), "scripts", "mc-processing-old.json"), "utf8"));
 
 await mkdir(output, { recursive: true });
 
 for (const version of versions) {
   const data = minecraftData(version);
-  const names = chinese[version];
-  if (!names) throw new Error(`Missing Chinese translations for ${version}`);
+  // The older game assets use different locale keys. Shared IDs use the verified
+  // modern translation; unmatched names remain in English instead of guessing.
+  const names = chinese[version] ?? chinese["1.20.4"];
   if (!data?.itemsArray?.length || !data?.enchantmentsArray?.length || !data?.blocksArray?.length) {
     throw new Error(`Minecraft data missing for ${version}`);
   }
 
   const recipes = {};
-  for (const recipe of Object.values(data.recipes ?? {}).flat()) {
+  for (const recipe of (version === "1.8.9" || version === "1.12.2" ? [] : Object.values(data.recipes ?? {}).flat())) {
     const result = data.items[recipe.result.id]?.name;
     if (!result) continue;
     const mapped = recipe.inShape
@@ -41,11 +44,12 @@ for (const version of versions) {
       .filter(({ type }) => ["mob", "animal", "living", "ambient", "hostile", "water_creature", "passive"].includes(type))
       .map(({ name, displayName, type }) => ({ name, displayName, displayNameZh: names.entities[name] ?? displayName, type })),
     recipes,
+    processingRecipes: processingRecipes[version] ?? oldProcessingRecipes[version] ?? [],
     enchantments: data.enchantmentsArray.map(({ name, displayName, maxLevel, exclude, category }) => ({
       name, displayName, displayNameZh: names.enchantments[name] ?? displayName, maxLevel, exclude, category,
     })),
-    effects: data.effectsArray.map(({ name, displayName, type }) => ({
-      name: name === "BadLuck" ? "unluck" : name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase(), displayName, displayNameZh: names.effects[name === "BadLuck" ? "unluck" : name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase()] ?? displayName, type,
+    effects: data.effectsArray.filter((effect, index, all) => all.findIndex((entry) => entry.name === effect.name) === index).map(({ id, name, displayName, type }) => ({
+      id, name: name === "BadLuck" ? "unluck" : name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase(), displayName, displayNameZh: names.effects[name === "BadLuck" ? "unluck" : name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase()] ?? displayName, type,
     })),
   };
 

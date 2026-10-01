@@ -7,6 +7,7 @@
     "build": "node scripts/generate-mc-data.mjs && next build",
     "mc:data": "node scripts/generate-mc-data.mjs",
     "check:mc": "node scripts/verify-mc-commands.mjs",
+    "check:expanded": "node scripts/verify-mc-expanded.mjs",
     "start": "next start",
     "lint": "eslint"
   },

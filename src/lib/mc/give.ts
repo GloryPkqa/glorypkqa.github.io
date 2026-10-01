@@ -14,12 +14,35 @@ export type McCatalog = {
   blocks?: { name: string; displayName: string }[];
   entities?: { name: string; displayName: string; displayNameZh: string; type: string }[];
   recipes?: Record<string, { shape?: (string | null)[][]; ingredients?: string[]; count: number }[]>;
+  processingRecipes?: McProcessingRecipe[];
   enchantments: McEnchantment[];
-  effects: { name: string; displayName: string; displayNameZh: string; type: string }[];
+  effects: { id: number; name: string; displayName: string; displayNameZh: string; type: string }[];
+};
+export type McProcessingRecipe = {
+  id: string;
+  type: "smelting" | "blasting" | "smoking" | "campfire_cooking" | "stonecutting" | "smithing_transform" | "smithing_trim";
+  result: string | null;
+  count: number;
+  ingredient: string | string[] | null;
+  template: string | string[] | null;
+  base: string | string[] | null;
+  addition: string | string[] | null;
+  pattern: string | null;
+  ticks: number | null;
+  xp: number | null;
 };
 export type SelectedEnchantment = { name: string; level: number };
 
-export const MC_VERSIONS = ["26.1", "1.21.8", "1.21.5", "1.20.6", "1.20.4"] as const;
+export const MC_VERSIONS = ["26.1", "1.21.8", "1.21.5", "1.20.6", "1.20.4", "1.17", "1.16.5", "1.12.2", "1.8.9"] as const;
+
+export function versionAtLeast(version: string, minimum: string) {
+  const parts = version.split(".").map(Number);
+  const target = minimum.split(".").map(Number);
+  for (let index = 0; index < Math.max(parts.length, target.length); index++) {
+    if ((parts[index] ?? 0) !== (target[index] ?? 0)) return (parts[index] ?? 0) > (target[index] ?? 0);
+  }
+  return true;
+}
 
 function snbtString(value: string) {
   return `'${value.replaceAll("\\", "\\\\").replaceAll("'", "\\'")}'`;
@@ -47,7 +70,7 @@ export function makeGiveCommand(input: {
   const itemId = `minecraft:${item}`;
   const stored = item === "enchanted_book";
 
-  if (version === "1.20.4") {
+  if (!versionAtLeast(version, "1.20.5")) {
     const nbt: string[] = [];
     if (enchantments.length) {
       nbt.push(`${stored ? "StoredEnchantments" : "Enchantments"}:[${enchantments.map(({ name: id, level }) => `{id:${snbtString(`minecraft:${id}`)},lvl:${level}s}`).join(",")}]`);

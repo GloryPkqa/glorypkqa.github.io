@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { McCatalog } from "@/lib/mc/give";
+import { versionAtLeast, type McCatalog } from "@/lib/mc/give";
 
 type Point = [string, string, string];
 type FillMode = "replace" | "keep" | "destroy" | "hollow" | "outline";
@@ -39,11 +39,12 @@ export default function BlockTool({ version, catalog }: { version: string; catal
   const from = parsedPoint(start);
   const to = parsedPoint(end);
   const volume = from && to ? from.reduce((result, value, index) => result * (Math.abs(value - to[index]) + 1), 1) : null;
+  const legacy = !versionAtLeast(version, "1.13");
   const setCommand = matchingBlock && from
-    ? `/setblock ${from.join(" ")} minecraft:${blockId}${setMode === "replace" ? "" : ` ${setMode}`}`
+    ? `/setblock ${from.join(" ")} minecraft:${blockId}${legacy ? ` 0 ${setMode}` : setMode === "replace" ? "" : ` ${setMode}`}`
     : "";
   const fillCommand = matchingBlock && from && to && volume && Number.isSafeInteger(volume)
-    ? `/fill ${from.join(" ")} ${to.join(" ")} minecraft:${blockId}${fillMode === "replace" ? "" : ` ${fillMode}`}`
+    ? `/fill ${from.join(" ")} ${to.join(" ")} minecraft:${blockId}${legacy ? ` 0 ${fillMode}` : fillMode === "replace" ? "" : ` ${fillMode}`}`
     : "";
 
   async function copy(value: string, key: string) {

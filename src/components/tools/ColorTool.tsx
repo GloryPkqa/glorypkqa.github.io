@@ -20,7 +20,7 @@ export default function ColorTool({ version }: { version: string }) {
   const parts = coloredParts(cleanMessage, style);
   const modifiers = `${style.bold ? "l" : ""}${style.italic ? "o" : ""}`;
   const outputs = [
-    { title: "Java /tellraw 指令", detail: version === "1.20.4" || version === "1.20.6" ? "1.20.x · JSON" : "1.21.5+ · SNBT", value: `/tellraw @a ${textComponent(parts, version)}` },
+    { title: "Java /tellraw 指令", detail: version.startsWith("1.") && Number(version.split(".")[1]) <= 20 ? "旧版 · JSON" : "新版 · SNBT", value: `/tellraw @a ${textComponent(parts, version)}` },
     { title: "传统 § 颜色码", detail: "经典 16 色；不支持 RGB、渐变和逐字色", value: `§${colorCode}${modifiers ? `§${modifiers.split("").join("§")}` : ""}${cleanMessage}§r` },
     { title: "插件 & 颜色码", detail: "需要插件支持 & 代码；仅经典 16 色", value: `&${colorCode}${modifiers ? `&${modifiers.split("").join("&")}` : ""}${cleanMessage}&r` },
   ];
@@ -32,7 +32,7 @@ export default function ColorTool({ version }: { version: string }) {
 
   return <section className="mc-section" id="colors" aria-labelledby="colors-heading">
     <div className="mc-section-header"><div><span className="mc-overline">02 / TEXT STUDIO</span><h2 id="colors-heading">文字与颜色<span>生成器</span></h2></div><span className="mc-section-mark" aria-hidden="true">✧</span></div>
-    <p className="mc-section-description">经典 16 色、RGB 渐变、AB 交替或手动指定每一段文字的颜色。实时预览，并复制对应版本的 /tellraw 指令。</p>
+    <p className="mc-section-description">经典 16 色、RGB 渐变、AB 交替或手动指定每一段文字的颜色。实时预览，并复制对应版本的 /tellraw 指令。{version === "1.8.9" || version === "1.12.2" ? " 旧版本不支持 RGB，生成指令时会逐段匹配最接近的经典颜色。" : ""}</p>
     <div className="mc-lab-grid"><div className="mc-form-panel">
       <label className="mc-field"><span>你的文字 <small>MESSAGE</small></span><textarea rows={3} value={message} maxLength={120} onChange={(event) => setMessage(event.target.value)} /></label>
       <div className="mc-form-section-label"><span>01</span> 经典调色盘</div>

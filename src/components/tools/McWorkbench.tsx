@@ -14,16 +14,20 @@ import BlockTool from "@/components/tools/BlockTool";
 import RecipeTool from "@/components/tools/RecipeTool";
 import WorldTool from "@/components/tools/WorldTool";
 import SummonTool from "@/components/tools/SummonTool";
+import BannerTool from "@/components/tools/BannerTool";
+import ProcessingRecipeTool from "@/components/tools/ProcessingRecipeTool";
+import DataPackTool from "@/components/tools/DataPackTool";
 import {
   MC_VERSIONS,
   enchantmentWarnings,
   makeGiveCommand,
+  versionAtLeast,
   type McCatalog,
   type SelectedEnchantment,
 } from "@/lib/mc/give";
 
 const CATEGORY_ITEMS = [
-  { name: "物品指令", detail: "GIVE COMMAND", number: "01", href: "#give", available: true },
+  { name: "物品指令", detail: "GIVE COMMAND", number: "01", href: "#give", minVersion: "1.16" },
   { name: "文字与颜色", detail: "TEXT & COLORS", number: "02", href: "#colors", available: true },
   { name: "坐标与计算", detail: "COORDINATES", number: "03", href: "#coordinates", available: true },
   { name: "服务器状态", detail: "SERVER STATUS", number: "04", href: "#server", available: true },
@@ -34,7 +38,10 @@ const CATEGORY_ITEMS = [
   { name: "方块与区域", detail: "BLOCK BUILDER", number: "09", href: "#blocks", available: true },
   { name: "合成配方", detail: "CRAFTING TABLE", number: "10", href: "#recipes", available: true },
   { name: "世界控制", detail: "WORLD CONTROL", number: "11", href: "#world", available: true },
-  { name: "实体召唤", detail: "CREATURE FORGE", number: "12", href: "#summon", available: true },
+  { name: "实体召唤", detail: "CREATURE FORGE", number: "12", href: "#summon", minVersion: "1.12" },
+  { name: "旗帜图案", detail: "BANNER STUDIO", number: "13", href: "#banner", minVersion: "1.16" },
+  { name: "进阶配方", detail: "PROCESSING RECIPES", number: "14", href: "#processing", minVersion: "1.16" },
+  { name: "数据包制作", detail: "DATAPACK FORGE", number: "15", href: "#datapack", minVersion: "1.16" },
 ];
 
 function CopyButton({ value }: { value: string }) {
@@ -53,7 +60,7 @@ function CopyButton({ value }: { value: string }) {
   return <button className="mc-copy-button" type="button" onClick={copy} disabled={!value}>{copied ? "已复制 ✓" : "复制指令 ↗"}</button>;
 }
 
-function CraftStartButton() {
+function CraftStartButton({ href }: { href: string }) {
   const [playing, setPlaying] = useState(false);
 
   function start(event: React.MouseEvent<HTMLAnchorElement>) {
@@ -61,13 +68,13 @@ function CraftStartButton() {
     if (playing) return;
     setPlaying(true);
     window.setTimeout(() => {
-      window.history.pushState(null, "", "#give");
-      document.getElementById("give")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      window.history.pushState(null, "", href);
+      document.getElementById(href.slice(1))?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
     }, 300);
     window.setTimeout(() => setPlaying(false), 850);
   }
 
-  return <a href="#give" className={`mc-craft-button${playing ? " is-crafting" : ""}`} onClick={start}>
+  return <a href={href} className={`mc-craft-button${playing ? " is-crafting" : ""}`} onClick={start}>
     <span className="mc-craft-button-glyph" aria-hidden="true">▦</span><span>开始制作</span><span className="mc-craft-button-arrow" aria-hidden="true">➜</span>
     <span className="mc-craft-sparks" aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <i key={index} style={{ "--spark": index } as React.CSSProperties} />)}</span>
   </a>;
@@ -82,8 +89,8 @@ function QuickReturn() {
     return () => window.removeEventListener("scroll", update);
   }, []);
   return <nav className={`mc-quick-return${visible ? " is-visible" : ""}`} aria-label="页面快速返回">
-    <a href="#top" onClick={(event) => { event.preventDefault(); window.history.pushState(null, "", "#top"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span aria-hidden="true">↑</span> 返回顶部</a>
-    <a href="#mc-directory-heading" onClick={(event) => { event.preventDefault(); document.getElementById("mc-directory-heading")?.scrollIntoView({ behavior: "smooth" }); }}><span aria-hidden="true">▦</span> 工具目录</a>
+    <a href="#top" title="返回顶部" onClick={(event) => { event.preventDefault(); window.history.pushState(null, "", "#top"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span aria-hidden="true">↑</span> 返回顶部</a>
+    <a href="#mc-directory-heading" title="工具目录" onClick={(event) => { event.preventDefault(); document.getElementById("mc-directory-heading")?.scrollIntoView({ behavior: "smooth" }); }}><span aria-hidden="true">▦</span> 工具目录</a>
   </nav>;
 }
 
@@ -190,17 +197,19 @@ export default function McWorkbench() {
   }, [version]);
 
   const itemCount = useMemo(() => catalog?.items.length.toLocaleString("zh-CN") ?? "—", [catalog]);
+  const visibleItems = CATEGORY_ITEMS.filter((entry) => !("minVersion" in entry) || versionAtLeast(version, entry.minVersion!));
 
   return (
     <main className="mc-tools">
       <div className="mc-ambient mc-ambient-a" aria-hidden="true" /><div className="mc-ambient mc-ambient-b" aria-hidden="true" />
       <header className="mc-header"><div className="mc-header-inner"><Link className="mc-brand" href="/"><span className="mc-brand-cube" aria-hidden="true">▦</span><span>Pkqa<span className="mc-brand-light"> Center.</span></span></Link><nav aria-label="工具导航"><Link href="/">个人主页</Link><a className="mc-nav-active" href="#top">MC 工具工坊</a></nav><div className="mc-header-end"><span className="mc-header-edition">JAVA EDITION</span><ThemeToggle /></div></div></header>
 
-      <div className="mc-main-wrap" id="top"><section className="mc-hero"><div className="mc-hero-copy"><div className="mc-kicker"><span className="mc-kicker-square" /> PKQA CENTER / A LITTLE WORLD OF TOOLS</div><h1>MC 工具<span>工坊<span className="mc-hero-dot">.</span></span></h1><p>把灵感变成指令，把复杂留给工具。<br />从一把独一无二的剑开始，慢慢搭建属于你的世界。</p><div className="mc-hero-actions"><CraftStartButton /><span>适用于 Minecraft Java Edition</span></div></div><div className="mc-hero-art" aria-hidden="true"><div className="mc-art-ring mc-art-ring-outer"/><div className="mc-art-ring mc-art-ring-inner"/><div className="mc-art-cube"><span className="mc-cube-top"/><span className="mc-cube-left"/><span className="mc-cube-right"/></div><span className="mc-art-orbit-one">✧</span><span className="mc-art-orbit-two">✦</span><span className="mc-art-caption">CRAFT YOUR OWN<br />POSSIBILITIES</span></div></section>
+      <div className="mc-main-wrap" id="top"><section className="mc-hero"><div className="mc-hero-copy"><div className="mc-kicker"><span className="mc-kicker-square" /> PKQA CENTER / A LITTLE WORLD OF TOOLS</div><h1>MC 工具<span>工坊<span className="mc-hero-dot">.</span></span></h1><p>把灵感变成指令，把复杂留给工具。<br />从一把独一无二的剑开始，慢慢搭建属于你的世界。</p><div className="mc-hero-actions"><CraftStartButton href={versionAtLeast(version, "1.16") ? "#give" : "#colors"} /><span>适用于 Minecraft Java Edition</span></div></div><div className="mc-hero-art" aria-hidden="true"><div className="mc-art-ring mc-art-ring-outer"/><div className="mc-art-ring mc-art-ring-inner"/><div className="mc-art-cube"><span className="mc-cube-top"/><span className="mc-cube-left"/><span className="mc-cube-right"/></div><span className="mc-art-orbit-one">✧</span><span className="mc-art-orbit-two">✦</span><span className="mc-art-caption">CRAFT YOUR OWN<br />POSSIBILITIES</span></div></section>
 
-      <section className="mc-directory" aria-labelledby="mc-directory-heading"><div className="mc-directory-heading"><div><span className="mc-overline">EXPLORE THE WORKSHOP</span><h2 id="mc-directory-heading">从这里<span>开始</span></h2></div><label className="mc-version-switch"><span>游戏版本 <small>VERSION</small></span><select value={version} onChange={(event) => { setVersion(event.target.value); setCatalog(null); setDataError(""); }}>{MC_VERSIONS.map((entry) => <option key={entry} value={entry}>Java {entry}</option>)}</select></label></div><div className="mc-directory-grid">{CATEGORY_ITEMS.map((entry) => <a className={`mc-directory-card${entry.available ? " is-available" : ""}`} href={entry.href} key={entry.number}><span className="mc-directory-number">{entry.number} / {String(CATEGORY_ITEMS.length).padStart(2, "0")}</span><span className="mc-directory-icon" aria-hidden="true">{({ "01": "⚒", "02": "✦", "03": "⌖", "04": "◈", "05": "♙", "06": "✳", "07": "✚", "08": "◇", "09": "▣", "10": "⊞", "11": "☀", "12": "♞" } as Record<string, string>)[entry.number]}</span><strong>{entry.name}</strong><small>{entry.detail}</small><span className="mc-directory-arrow">{entry.available ? "↗" : "逐步开放"}</span></a>)}</div><div className="mc-data-note"><span className="mc-data-indicator" /> {dataError || (catalog ? `已载入 Java ${version} 数据 · ${itemCount} 种物品 · ${catalog.enchantments.length} 种附魔${catalog.blocks ? ` · ${catalog.blocks.length} 种方块` : ""}` : "正在读取版本数据…")}</div></section>
+      <section className="mc-directory" aria-labelledby="mc-directory-heading"><div className="mc-directory-heading"><div><span className="mc-overline">EXPLORE THE WORKSHOP</span><h2 id="mc-directory-heading">从这里<span>开始</span></h2></div><label className="mc-version-switch"><span>游戏版本 <small>VERSION</small></span><select value={version} onChange={(event) => { setVersion(event.target.value); setCatalog(null); setDataError(""); }}>{MC_VERSIONS.map((entry) => <option key={entry} value={entry}>Java {entry}</option>)}</select></label></div><div className="mc-directory-grid">{visibleItems.map((entry) => <a className="mc-directory-card is-available" href={entry.href} key={entry.number}><span className="mc-directory-number">{entry.number} / {String(CATEGORY_ITEMS.length).padStart(2, "0")}</span><span className="mc-directory-icon" aria-hidden="true">{({ "01": "⚒", "02": "✦", "03": "⌖", "04": "◈", "05": "♙", "06": "✳", "07": "✚", "08": "◇", "09": "▣", "10": "⊞", "11": "☀", "12": "♞", "13": "⚑", "14": "♨", "15": "▤" } as Record<string, string>)[entry.number]}</span><strong>{entry.name}</strong><small>{entry.detail}</small><span className="mc-directory-arrow">↗</span></a>)}</div><div className="mc-data-note"><span className="mc-data-indicator" /> {dataError || (catalog ? `已载入 Java ${version} 数据 · ${itemCount} 种物品 · ${catalog.enchantments.length} 种附魔${catalog.blocks ? ` · ${catalog.blocks.length} 种方块` : ""}` : "正在读取版本数据…")}{!versionAtLeast(version, "1.16") && <span> · 旧版物品元数据与配方格式不同，相关生成器已隐藏。</span>}</div></section>
 
-      <GiveTool version={version} catalog={catalog} />
+      {catalog && catalog.sourceVersion !== version && <p className="mc-version-source-note">Java {version} 的目录使用 minecraft-data 收录的 {catalog.sourceVersion} 数据；请在目标客户端核对最终指令。</p>}
+      {versionAtLeast(version, "1.16") && <GiveTool version={version} catalog={catalog} />}
       <ColorTool version={version} />
       <CoordinateTool />
       <ServerLookup />
@@ -209,11 +218,14 @@ export default function McWorkbench() {
       <EffectTool catalog={catalog} />
       <TitleTool version={version} />
       <BlockTool version={version} catalog={catalog} />
-      <RecipeTool version={version} catalog={catalog} />
+      {versionAtLeast(version, "1.16") && <RecipeTool version={version} catalog={catalog} />}
       <WorldTool />
-      <SummonTool version={version} catalog={catalog} />
+      {versionAtLeast(version, "1.12") && <SummonTool version={version} catalog={catalog} />}
+      {versionAtLeast(version, "1.16") && <BannerTool version={version} />}
+      {versionAtLeast(version, "1.16") && <ProcessingRecipeTool version={version} catalog={catalog} />}
+      {versionAtLeast(version, "1.16") && <DataPackTool version={version} catalog={catalog} />}
 
-      <section className="mc-upcoming mc-section" id="upcoming"><span className="mc-overline">MORE TO CRAFT</span><h2>下一站，还有更多<span>可能。</span></h2><p>数据包制作、结构蓝图、更多指令生成器等工具会依次加入工坊。每个工具都会保留清晰的版本与适用范围说明。</p><div className="mc-upcoming-stamp">WORK IN PROGRESS <span>✳</span></div></section>
+      <section className="mc-upcoming mc-section" id="upcoming"><span className="mc-overline">MORE TO CRAFT</span><h2>下一站，还有更多<span>可能。</span></h2><p>结构蓝图、更多指令生成器等工具会依次加入工坊。每个工具都会保留清晰的版本与适用范围说明。</p><div className="mc-upcoming-stamp">WORK IN PROGRESS <span>✳</span></div></section>
       <footer className="mc-footer"><Link href="/">← 返回 Pkqa Center</Link><span>MC 工具工坊 · 非官方 Minecraft 爱好者工具 · Made by GloryPkqa</span><a href="https://github.com/PrismarineJS/minecraft-data" target="_blank" rel="noopener noreferrer">物品数据：PrismarineJS / minecraft-data ↗</a></footer></div>
       <QuickReturn />
     </main>

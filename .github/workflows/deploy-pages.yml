@@ -33,6 +33,7 @@ jobs:
       - run: pnpm check:mc
       - run: pnpm lint
       - run: pnpm build
+      - run: pnpm check:expanded
       - run: touch out/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

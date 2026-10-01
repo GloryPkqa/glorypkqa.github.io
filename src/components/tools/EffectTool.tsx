@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { McCatalog } from "@/lib/mc/give";
+import { versionAtLeast, type McCatalog } from "@/lib/mc/give";
 
 export default function EffectTool({ catalog }: { catalog: McCatalog | null }) {
   const [effect, setEffect] = useState("speed");
@@ -15,7 +15,10 @@ export default function EffectTool({ catalog }: { catalog: McCatalog | null }) {
   const targetValid = /^(@[pares](\[[^\]]*\])?|[A-Za-z0-9_]{3,16})$/.test(target.trim());
   const safeDuration = Math.max(1, Math.min(1_000_000, Math.floor(duration || 1)));
   const safeLevel = Math.max(1, Math.min(256, Math.floor(level || 1)));
-  const command = available && targetValid ? `/effect give ${target.trim()} minecraft:${activeEffect} ${safeDuration} ${safeLevel - 1} ${hideParticles}` : "";
+  const modern = versionAtLeast(catalog?.version ?? "26.1", "1.13");
+  const command = available && targetValid ? modern
+    ? `/effect give ${target.trim()} minecraft:${activeEffect} ${safeDuration} ${safeLevel - 1} ${hideParticles}`
+    : `/effect ${target.trim()} ${available.id} ${safeDuration} ${safeLevel - 1} ${hideParticles}` : "";
 
   async function copy() { if (!command) return; try { await navigator.clipboard.writeText(command); setCopied(true); window.setTimeout(() => setCopied(false), 1600); } catch { setCopied(false); } }
 
