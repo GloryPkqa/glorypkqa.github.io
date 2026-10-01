@@ -15,6 +15,16 @@ for (const version of versions) {
     throw new Error(`Minecraft data missing for ${version}`);
   }
 
+  const recipes = {};
+  for (const recipe of Object.values(data.recipes ?? {}).flat()) {
+    const result = data.items[recipe.result.id]?.name;
+    if (!result) continue;
+    const mapped = recipe.inShape
+      ? { shape: recipe.inShape.map((row) => row.map((id) => id === null ? null : data.items[id]?.name ?? null)), count: recipe.result.count }
+      : { ingredients: recipe.ingredients?.map((id) => data.items[id]?.name).filter(Boolean) ?? [], count: recipe.result.count };
+    (recipes[result] ??= []).push(mapped);
+  }
+
   const payload = {
     version,
     sourceVersion: data.version.minecraftVersion,
@@ -22,6 +32,7 @@ for (const version of versions) {
       .filter((item) => item.name !== "air")
       .map(({ name, displayName, stackSize }) => ({ name, displayName, stackSize })),
     blocks: data.blocksArray.map(({ name, displayName }) => ({ name, displayName })),
+    recipes,
     enchantments: data.enchantmentsArray.map(({ name, displayName, maxLevel, exclude, category }) => ({
       name, displayName, maxLevel, exclude, category,
     })),

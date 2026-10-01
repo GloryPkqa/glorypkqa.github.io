@@ -11,6 +11,7 @@ export type McCatalog = {
   sourceVersion: string;
   items: McItem[];
   blocks?: { name: string; displayName: string }[];
+  recipes?: Record<string, { shape?: (string | null)[][]; ingredients?: string[]; count: number }[]>;
   enchantments: McEnchantment[];
   effects: { name: string; displayName: string; type: string }[];
 };
