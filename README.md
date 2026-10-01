@@ -21,10 +21,10 @@ pnpm dev
 | `/give` 物品与附魔 | 浏览器本地；物品和附魔数据由 `minecraft-data` 在构建时生成 |
 | 颜色文字与 `/tellraw` | 浏览器本地；支持渐变、AB 交替和逐字上色，按 Java 1.21.5 的文本格式分界 |
 | 主世界与下界坐标 | 浏览器本地 |
-| Java / 基岩版服务器状态 | 浏览器优先调用 [mcstatus.io](https://mcstatus.io/docs)，未探测到在线响应时向 [MCSrvStat.us](https://api.mcsrvstat.us/) 复核；结果由接口缓存 |
-| Java 玩家 UUID、皮肤与已装备披风 | 浏览器调用 [PlayerDB](https://playerdb.co/)；头像来自 Crafthead，皮肤和披风来自 Mojang 贴图地址，可能存在缓存延迟 |
+| Java / 基岩版服务器状态 | 地址默认留空；浏览器优先调用 [mcstatus.io](https://mcstatus.io/docs)，未探测到在线响应时向 [MCSrvStat.us](https://api.mcsrvstat.us/) 复核；结果由接口缓存 |
+| Java 玩家 UUID、皮肤与已装备披风 | 打开页面自动查询 Pkqa；浏览器调用 [PlayerDB](https://playerdb.co/)；头像来自 Crafthead，皮肤和披风来自 Mojang 贴图地址，使用 [skinview3d](https://github.com/bs-community/skinview3d) 展示披风人物，资料可能存在缓存延迟 |
 | Java 版本动态 | 浏览器读取 [Mojang 官方版本目录](https://piston-meta.mojang.com/mc/game/version_manifest_v2.json) |
-| `/effect` 状态效果 | 浏览器本地；效果数据由 `minecraft-data` 在构建时生成 |
+| `/effect` 状态效果与多效果药水 | 浏览器本地；可切换生成单效果 `/effect` 或多效果药水 `/give`，按版本输出 NBT 或物品组件；效果数据由 `minecraft-data` 在构建时生成 |
 | `/title` 标题、字幕与操作栏 | 浏览器本地；三个区域独立配色，支持渐变、AB 交替和逐字上色，按 Java 1.21.5 的文本格式分界 |
 | `/setblock` 与 `/fill` | 浏览器本地；方块目录由 `minecraft-data` 在构建时生成，包含体积检查 |
 | 工作台配方查询 | 浏览器本地；按大类、小类和中英文名称查找，显示图标和数据源收录的有序、无序合成方案 |
@@ -43,11 +43,12 @@ pnpm dev
 ```bash
 pnpm check:mc
 pnpm check:expanded
+pnpm check:potion
 pnpm lint
 pnpm build
 ```
 
-`check:mc` 对照 Mojang 发布记录中的关键版本差异，检查旧 NBT、1.20.5 后的物品组件、1.21.5 后简化的附魔格式及附魔书。`check:expanded` 检查跨版本目录、数据包 ZIP 及 `/give` 产物属性导入。浏览器交互仍应在所选游戏版本内最终验证。
+`check:mc` 对照 Mojang 发布记录中的关键版本差异，检查旧 NBT、1.20.5 后的物品组件、1.21.5 后简化的附魔格式及附魔书。`check:expanded` 检查跨版本目录、数据包 ZIP 及 `/give` 产物属性导入；`check:potion` 检查 1.8.9 至 26.1 的多效果药水语法与旧版效果过滤。浏览器交互仍应在所选游戏版本内最终验证。
 草稿 PR 会运行相同的检查和静态构建；只有推送到 `main` 才触发 GitHub Pages 部署。
 
 ## 数据与致谢

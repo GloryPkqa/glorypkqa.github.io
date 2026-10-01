@@ -96,6 +96,9 @@ function QuickReturn() {
 
 function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | null }) {
   const [item, setItem] = useState("diamond_sword");
+  const [itemPickerOpen, setItemPickerOpen] = useState(false);
+  const [itemSearch, setItemSearch] = useState("");
+  const [itemLimit, setItemLimit] = useState(60);
   const [target, setTarget] = useState("@p");
   const [count, setCount] = useState(1);
   const [name, setName] = useState("");
@@ -106,6 +109,10 @@ function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | 
 
   const normalizedItem = item.trim().toLowerCase().replace(/^minecraft:/, "");
   const matchingItem = catalog?.items.find((entry) => entry.name === normalizedItem);
+  const filteredItems = useMemo(() => {
+    const query = itemSearch.trim().toLowerCase().replace(/^minecraft:/, "");
+    return catalog?.items.filter((entry) => !query || entry.name.includes(query) || entry.displayName.toLowerCase().includes(query) || entry.displayNameZh.toLowerCase().includes(query)) ?? [];
+  }, [catalog, itemSearch]);
   const normalizedTarget = target.trim();
   const targetValid = /^(@[aprs](\[[^\]]*\])?|[A-Za-z0-9_]{3,16})$/.test(normalizedTarget);
   const selectedForVersion = selected.filter((entry) => catalog?.enchantments.some((option) => option.name === entry.name));
@@ -143,11 +150,11 @@ function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | 
         <div className="mc-form-panel">
           <div className="mc-form-section-label"><span>01</span> 基础物品</div>
           <div className="mc-field-grid">
-            <label className="mc-field mc-field-wide"><span>物品 ID <small>ITEM</small></span>
-              <input value={item} onChange={(event) => setItem(event.target.value)} list="mc-item-list" placeholder="diamond_sword" spellCheck={false} autoComplete="off" />
-              <datalist id="mc-item-list">{catalog?.items.map((entry) => <option key={entry.name} value={entry.name} label={`${entry.displayNameZh} · ${entry.displayName}`} />)}</datalist>
+            <div className="mc-field mc-field-wide"><label htmlFor="mc-give-item">物品 ID <small>ITEM</small></label>
+              <div className="mc-give-item-entry"><input id="mc-give-item" value={item} onChange={(event) => setItem(event.target.value)} placeholder="输入物品 ID，或浏览目录" spellCheck={false} autoComplete="off" /><button type="button" aria-expanded={itemPickerOpen} aria-controls="mc-give-item-picker" onClick={() => { setItemPickerOpen((open) => !open); setItemSearch(""); setItemLimit(60); }}>{itemPickerOpen ? "收起目录 ↑" : "浏览全部物品 ▾"}</button></div>
+              {itemPickerOpen && <div className="mc-give-item-picker" id="mc-give-item-picker"><div className="mc-give-item-picker-head"><label htmlFor="mc-give-item-search">搜索当前版本物品</label><span>{filteredItems.length} / {catalog?.items.length ?? 0}</span></div><input id="mc-give-item-search" value={itemSearch} onChange={(event) => { setItemSearch(event.target.value); setItemLimit(60); }} placeholder="输入中文、English 或物品 ID" autoComplete="off" /><div className="mc-give-item-results" role="group" aria-label="物品目录">{filteredItems.slice(0, itemLimit).map((entry) => <button type="button" key={entry.name} className={entry.name === normalizedItem ? "active" : ""} onClick={() => { setItem(entry.name); setItemPickerOpen(false); }}><strong>{entry.displayNameZh}</strong><span>{entry.displayName}</span><code>{entry.name}</code></button>)}</div>{!catalog && <p>正在载入物品目录…</p>}{catalog && !filteredItems.length && <p>没有找到匹配的物品。</p>}{filteredItems.length > itemLimit && <button type="button" className="mc-give-item-more" onClick={() => setItemLimit((limit) => limit + 60)}>显示更多物品 ↓</button>}</div>}
               <em>{!catalog ? "正在载入该版本的物品数据…" : matchingItem ? `${matchingItem.displayNameZh} · ${matchingItem.displayName} · minecraft:${matchingItem.name}` : "请选择列表中的有效物品 ID"}</em>
-            </label>
+            </div>
             <label className="mc-field"><span>目标 <small>TARGET</small></span><input value={target} onChange={(event) => setTarget(event.target.value)} spellCheck={false} /></label>
             <label className="mc-field"><span>数量 <small>COUNT</small></span><input type="number" min="1" max="64" value={count} onChange={(event) => setCount(Number(event.target.value))} /></label>
           </div>

@@ -8,6 +8,7 @@
     "mc:data": "node scripts/generate-mc-data.mjs",
     "check:mc": "node scripts/verify-mc-commands.mjs",
     "check:expanded": "node scripts/verify-mc-expanded.mjs",
+    "check:potion": "node scripts/verify-mc-potion.mjs",
     "start": "next start",
     "lint": "eslint"
   },
@@ -15,7 +16,8 @@
     "framer-motion": "^13.4.1",
     "next": "16.3.5",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "skinview3d": "^3.4.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
