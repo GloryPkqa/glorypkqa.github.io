@@ -12,6 +12,7 @@ import EffectTool from "@/components/tools/EffectTool";
 import TitleTool from "@/components/tools/TitleTool";
 import BlockTool from "@/components/tools/BlockTool";
 import RecipeTool from "@/components/tools/RecipeTool";
+import WorldTool from "@/components/tools/WorldTool";
 import {
   MC_VERSIONS,
   enchantmentWarnings,
@@ -31,6 +32,7 @@ const CATEGORY_ITEMS = [
   { name: "标题与字幕", detail: "TITLE COMMAND", number: "08", href: "#title", available: true },
   { name: "方块与区域", detail: "BLOCK BUILDER", number: "09", href: "#blocks", available: true },
   { name: "合成配方", detail: "CRAFTING TABLE", number: "10", href: "#recipes", available: true },
+  { name: "世界控制", detail: "WORLD CONTROL", number: "11", href: "#world", available: true },
 ];
 
 function CopyButton({ value }: { value: string }) {
@@ -160,7 +162,7 @@ export default function McWorkbench() {
 
       <div className="mc-main-wrap" id="top"><section className="mc-hero"><div className="mc-hero-copy"><div className="mc-kicker"><span className="mc-kicker-square" /> PKQA CENTER / A LITTLE WORLD OF TOOLS</div><h1>MC 工具<span>工坊<span className="mc-hero-dot">.</span></span></h1><p>把灵感变成指令，把复杂留给工具。<br />从一把独一无二的剑开始，慢慢搭建属于你的世界。</p><div className="mc-hero-actions"><a href="#give">开始制作 <span>↘</span></a><span>适用于 Minecraft Java Edition</span></div></div><div className="mc-hero-art" aria-hidden="true"><div className="mc-art-ring mc-art-ring-outer"/><div className="mc-art-ring mc-art-ring-inner"/><div className="mc-art-cube"><span className="mc-cube-top"/><span className="mc-cube-left"/><span className="mc-cube-right"/></div><span className="mc-art-orbit-one">✧</span><span className="mc-art-orbit-two">✦</span><span className="mc-art-caption">CRAFT YOUR OWN<br />POSSIBILITIES</span></div></section>
 
-      <section className="mc-directory" aria-labelledby="mc-directory-heading"><div className="mc-directory-heading"><div><span className="mc-overline">EXPLORE THE WORKSHOP</span><h2 id="mc-directory-heading">从这里<span>开始</span></h2></div><label className="mc-version-switch"><span>游戏版本 <small>VERSION</small></span><select value={version} onChange={(event) => { setVersion(event.target.value); setCatalog(null); setDataError(""); }}>{MC_VERSIONS.map((entry) => <option key={entry} value={entry}>Java {entry}</option>)}</select></label></div><div className="mc-directory-grid">{CATEGORY_ITEMS.map((entry) => <a className={`mc-directory-card${entry.available ? " is-available" : ""}`} href={entry.href} key={entry.number}><span className="mc-directory-number">{entry.number} / {String(CATEGORY_ITEMS.length).padStart(2, "0")}</span><span className="mc-directory-icon" aria-hidden="true">{({ "01": "⚒", "02": "✦", "03": "⌖", "04": "◈", "05": "♙", "06": "✳", "07": "✚", "08": "◇", "09": "▣", "10": "⊞" } as Record<string, string>)[entry.number]}</span><strong>{entry.name}</strong><small>{entry.detail}</small><span className="mc-directory-arrow">{entry.available ? "↗" : "逐步开放"}</span></a>)}</div><div className="mc-data-note"><span className="mc-data-indicator" /> {dataError || (catalog ? `已载入 Java ${version} 数据 · ${itemCount} 种物品 · ${catalog.enchantments.length} 种附魔${catalog.blocks ? ` · ${catalog.blocks.length} 种方块` : ""}` : "正在读取版本数据…")}</div></section>
+      <section className="mc-directory" aria-labelledby="mc-directory-heading"><div className="mc-directory-heading"><div><span className="mc-overline">EXPLORE THE WORKSHOP</span><h2 id="mc-directory-heading">从这里<span>开始</span></h2></div><label className="mc-version-switch"><span>游戏版本 <small>VERSION</small></span><select value={version} onChange={(event) => { setVersion(event.target.value); setCatalog(null); setDataError(""); }}>{MC_VERSIONS.map((entry) => <option key={entry} value={entry}>Java {entry}</option>)}</select></label></div><div className="mc-directory-grid">{CATEGORY_ITEMS.map((entry) => <a className={`mc-directory-card${entry.available ? " is-available" : ""}`} href={entry.href} key={entry.number}><span className="mc-directory-number">{entry.number} / {String(CATEGORY_ITEMS.length).padStart(2, "0")}</span><span className="mc-directory-icon" aria-hidden="true">{({ "01": "⚒", "02": "✦", "03": "⌖", "04": "◈", "05": "♙", "06": "✳", "07": "✚", "08": "◇", "09": "▣", "10": "⊞", "11": "☀" } as Record<string, string>)[entry.number]}</span><strong>{entry.name}</strong><small>{entry.detail}</small><span className="mc-directory-arrow">{entry.available ? "↗" : "逐步开放"}</span></a>)}</div><div className="mc-data-note"><span className="mc-data-indicator" /> {dataError || (catalog ? `已载入 Java ${version} 数据 · ${itemCount} 种物品 · ${catalog.enchantments.length} 种附魔${catalog.blocks ? ` · ${catalog.blocks.length} 种方块` : ""}` : "正在读取版本数据…")}</div></section>
 
       <GiveTool version={version} catalog={catalog} />
       <ColorTool version={version} />
@@ -172,6 +174,7 @@ export default function McWorkbench() {
       <TitleTool version={version} />
       <BlockTool version={version} catalog={catalog} />
       <RecipeTool version={version} catalog={catalog} />
+      <WorldTool />
 
       <section className="mc-upcoming mc-section" id="upcoming"><span className="mc-overline">MORE TO CRAFT</span><h2>下一站，还有更多<span>可能。</span></h2><p>数据包制作、结构蓝图、更多指令生成器等工具会依次加入工坊。每个工具都会保留清晰的版本与适用范围说明。</p><div className="mc-upcoming-stamp">WORK IN PROGRESS <span>✳</span></div></section>
       <footer className="mc-footer"><Link href="/">← 返回 Pkqa Center</Link><span>MC 工具工坊 · Made by GloryPkqa</span><a href="https://github.com/PrismarineJS/minecraft-data" target="_blank" rel="noopener noreferrer">物品数据：PrismarineJS / minecraft-data ↗</a></footer></div>

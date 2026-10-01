@@ -4,7 +4,7 @@ import "./tools.css";
 
 export const metadata: Metadata = {
   title: "MC 工具工坊 · Pkqa Center",
-  description: "Minecraft 物品指令、附魔、颜色文字和坐标工具。为 Java 版不同版本生成可复制的结果。",
+  description: "Minecraft 指令生成、合成配方、颜色文字、坐标、服务器状态与玩家查询。支持多个 Java 版本。",
 };
 
 export default function ToolsPage() {
