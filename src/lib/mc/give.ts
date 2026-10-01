@@ -1,7 +1,8 @@
-export type McItem = { name: string; displayName: string; stackSize: number };
+export type McItem = { name: string; displayName: string; displayNameZh: string; stackSize: number; category: string; icon: boolean; iconUrl: string | null };
 export type McEnchantment = {
   name: string;
   displayName: string;
+  displayNameZh: string;
   maxLevel: number;
   exclude: string[];
   category: string;
@@ -11,10 +12,10 @@ export type McCatalog = {
   sourceVersion: string;
   items: McItem[];
   blocks?: { name: string; displayName: string }[];
-  entities?: { name: string; displayName: string; type: string }[];
+  entities?: { name: string; displayName: string; displayNameZh: string; type: string }[];
   recipes?: Record<string, { shape?: (string | null)[][]; ingredients?: string[]; count: number }[]>;
   enchantments: McEnchantment[];
-  effects: { name: string; displayName: string; type: string }[];
+  effects: { name: string; displayName: string; displayNameZh: string; type: string }[];
 };
 export type SelectedEnchantment = { name: string; level: number };
 

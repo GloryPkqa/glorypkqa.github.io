@@ -53,6 +53,40 @@ function CopyButton({ value }: { value: string }) {
   return <button className="mc-copy-button" type="button" onClick={copy} disabled={!value}>{copied ? "已复制 ✓" : "复制指令 ↗"}</button>;
 }
 
+function CraftStartButton() {
+  const [playing, setPlaying] = useState(false);
+
+  function start(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    if (playing) return;
+    setPlaying(true);
+    window.setTimeout(() => {
+      window.history.pushState(null, "", "#give");
+      document.getElementById("give")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    }, 300);
+    window.setTimeout(() => setPlaying(false), 850);
+  }
+
+  return <a href="#give" className={`mc-craft-button${playing ? " is-crafting" : ""}`} onClick={start}>
+    <span className="mc-craft-button-glyph" aria-hidden="true">▦</span><span>开始制作</span><span className="mc-craft-button-arrow" aria-hidden="true">➜</span>
+    <span className="mc-craft-sparks" aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <i key={index} style={{ "--spark": index } as React.CSSProperties} />)}</span>
+  </a>;
+}
+
+function QuickReturn() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const update = () => setVisible(window.scrollY > 650);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+  return <nav className={`mc-quick-return${visible ? " is-visible" : ""}`} aria-label="页面快速返回">
+    <a href="#top" onClick={(event) => { event.preventDefault(); window.history.pushState(null, "", "#top"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span aria-hidden="true">↑</span> 返回顶部</a>
+    <a href="#mc-directory-heading" onClick={(event) => { event.preventDefault(); document.getElementById("mc-directory-heading")?.scrollIntoView({ behavior: "smooth" }); }}><span aria-hidden="true">▦</span> 工具目录</a>
+  </nav>;
+}
+
 function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | null }) {
   const [item, setItem] = useState("diamond_sword");
   const [target, setTarget] = useState("@p");
@@ -104,8 +138,8 @@ function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | 
           <div className="mc-field-grid">
             <label className="mc-field mc-field-wide"><span>物品 ID <small>ITEM</small></span>
               <input value={item} onChange={(event) => setItem(event.target.value)} list="mc-item-list" placeholder="diamond_sword" spellCheck={false} autoComplete="off" />
-              <datalist id="mc-item-list">{catalog?.items.map((entry) => <option key={entry.name} value={entry.name} label={entry.displayName} />)}</datalist>
-              <em>{!catalog ? "正在载入该版本的物品数据…" : matchingItem ? `${matchingItem.displayName} · minecraft:${matchingItem.name}` : "请选择列表中的有效物品 ID"}</em>
+              <datalist id="mc-item-list">{catalog?.items.map((entry) => <option key={entry.name} value={entry.name} label={`${entry.displayNameZh} · ${entry.displayName}`} />)}</datalist>
+              <em>{!catalog ? "正在载入该版本的物品数据…" : matchingItem ? `${matchingItem.displayNameZh} · ${matchingItem.displayName} · minecraft:${matchingItem.name}` : "请选择列表中的有效物品 ID"}</em>
             </label>
             <label className="mc-field"><span>目标 <small>TARGET</small></span><input value={target} onChange={(event) => setTarget(event.target.value)} spellCheck={false} /></label>
             <label className="mc-field"><span>数量 <small>COUNT</small></span><input type="number" min="1" max="64" value={count} onChange={(event) => setCount(Number(event.target.value))} /></label>
@@ -119,16 +153,16 @@ function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | 
           <label className="mc-check"><input type="checkbox" checked={unbreakable} onChange={(event) => setUnbreakable(event.target.checked)} /><span className="mc-check-box" aria-hidden="true" /> 不可破坏 <small>UNBREAKABLE</small></label>
 
           <div className="mc-form-section-label"><span>03</span> 附魔配置</div>
-          <div className="mc-add-enchant"><select value={enchantToAdd} onChange={(event) => setEnchantToAdd(event.target.value)} aria-label="选择附魔"><option value="">选择要添加的附魔…</option>{availableEnchantments.map((entry) => <option key={entry.name} value={entry.name}>{entry.displayName} · {entry.name}</option>)}</select><button type="button" onClick={addEnchantment} disabled={!enchantToAdd}>添加 ＋</button></div>
+          <div className="mc-add-enchant"><select value={enchantToAdd} onChange={(event) => setEnchantToAdd(event.target.value)} aria-label="选择附魔"><option value="">选择要添加的附魔…</option>{availableEnchantments.map((entry) => <option key={entry.name} value={entry.name}>{entry.displayNameZh} · {entry.displayName}</option>)}</select><button type="button" onClick={addEnchantment} disabled={!enchantToAdd}>添加 ＋</button></div>
           {selectedForVersion.length ? <div className="mc-enchant-list">{selectedForVersion.map((entry) => {
             const details = catalog?.enchantments.find((option) => option.name === entry.name);
-            return <div className="mc-enchant-row" key={entry.name}><span><strong>{details?.displayName ?? entry.name}</strong><small>{entry.name} · 原版最高 {details?.maxLevel ?? "?"}</small></span><label>等级 <input type="number" min="1" max="255" value={entry.level} onChange={(event) => setSelected((previous) => previous.map((chosen) => chosen.name === entry.name ? { ...chosen, level: Math.max(1, Math.min(255, Number(event.target.value) || 1)) } : chosen))} /></label><button type="button" className="mc-remove" aria-label={`移除 ${entry.name}`} onClick={() => setSelected((previous) => previous.filter((chosen) => chosen.name !== entry.name))}>×</button></div>;
+            return <div className="mc-enchant-row" key={entry.name}><span><strong>{details?.displayNameZh ?? entry.name} <small>{details?.displayName}</small></strong><small>{entry.name} · 原版最高 {details?.maxLevel ?? "?"}</small></span><label>等级 <input type="number" min="1" max="255" value={entry.level} onChange={(event) => setSelected((previous) => previous.map((chosen) => chosen.name === entry.name ? { ...chosen, level: Math.max(1, Math.min(255, Number(event.target.value) || 1)) } : chosen))} /></label><button type="button" className="mc-remove" aria-label={`移除 ${entry.name}`} onClick={() => setSelected((previous) => previous.filter((chosen) => chosen.name !== entry.name))}>×</button></div>;
           })}</div> : <p className="mc-empty-hint">还没有添加附魔。试试给剑加上锋利与耐久。</p>}
         </div>
 
         <aside className="mc-output-panel" aria-label="指令预览">
           <div className="mc-output-top"><span><i /> LIVE OUTPUT</span><span>JAVA · {version}</span></div>
-          <div className="mc-item-display"><div className="mc-item-glyph" aria-hidden="true"><span>✦</span></div><span className="mc-item-display-name">{name.trim() || matchingItem?.displayName || "选择物品"}</span><span className="mc-item-display-id">{matchingItem ? `minecraft:${matchingItem.name}` : "minecraft:..."}</span>{selectedForVersion.length > 0 && <span className="mc-enchanted-badge">✧ 附魔 × {selectedForVersion.length}</span>}</div>
+          <div className="mc-item-display"><div className="mc-item-glyph" aria-hidden="true"><span>✦</span></div><span className="mc-item-display-name">{name.trim() || matchingItem?.displayNameZh || "选择物品"}</span><span className="mc-item-display-id">{matchingItem ? `${matchingItem.displayName} · minecraft:${matchingItem.name}` : "minecraft:..."}</span>{selectedForVersion.length > 0 && <span className="mc-enchanted-badge">✧ 附魔 × {selectedForVersion.length}</span>}</div>
           <div className="mc-code-heading"><span>生成的指令</span><span>COMMAND</span></div>
           <pre className="mc-code-output"><code>{command || "// 输入有效物品 ID 和目标后生成指令"}</code></pre>
           {!targetValid && <p className="mc-output-warning">目标只能是玩家名或有效选择器，例如 @p、@s。</p>}
@@ -162,7 +196,7 @@ export default function McWorkbench() {
       <div className="mc-ambient mc-ambient-a" aria-hidden="true" /><div className="mc-ambient mc-ambient-b" aria-hidden="true" />
       <header className="mc-header"><div className="mc-header-inner"><Link className="mc-brand" href="/"><span className="mc-brand-cube" aria-hidden="true">▦</span><span>Pkqa<span className="mc-brand-light"> Center.</span></span></Link><nav aria-label="工具导航"><Link href="/">个人主页</Link><a className="mc-nav-active" href="#top">MC 工具工坊</a></nav><div className="mc-header-end"><span className="mc-header-edition">JAVA EDITION</span><ThemeToggle /></div></div></header>
 
-      <div className="mc-main-wrap" id="top"><section className="mc-hero"><div className="mc-hero-copy"><div className="mc-kicker"><span className="mc-kicker-square" /> PKQA CENTER / A LITTLE WORLD OF TOOLS</div><h1>MC 工具<span>工坊<span className="mc-hero-dot">.</span></span></h1><p>把灵感变成指令，把复杂留给工具。<br />从一把独一无二的剑开始，慢慢搭建属于你的世界。</p><div className="mc-hero-actions"><a href="#give">开始制作 <span>↘</span></a><span>适用于 Minecraft Java Edition</span></div></div><div className="mc-hero-art" aria-hidden="true"><div className="mc-art-ring mc-art-ring-outer"/><div className="mc-art-ring mc-art-ring-inner"/><div className="mc-art-cube"><span className="mc-cube-top"/><span className="mc-cube-left"/><span className="mc-cube-right"/></div><span className="mc-art-orbit-one">✧</span><span className="mc-art-orbit-two">✦</span><span className="mc-art-caption">CRAFT YOUR OWN<br />POSSIBILITIES</span></div></section>
+      <div className="mc-main-wrap" id="top"><section className="mc-hero"><div className="mc-hero-copy"><div className="mc-kicker"><span className="mc-kicker-square" /> PKQA CENTER / A LITTLE WORLD OF TOOLS</div><h1>MC 工具<span>工坊<span className="mc-hero-dot">.</span></span></h1><p>把灵感变成指令，把复杂留给工具。<br />从一把独一无二的剑开始，慢慢搭建属于你的世界。</p><div className="mc-hero-actions"><CraftStartButton /><span>适用于 Minecraft Java Edition</span></div></div><div className="mc-hero-art" aria-hidden="true"><div className="mc-art-ring mc-art-ring-outer"/><div className="mc-art-ring mc-art-ring-inner"/><div className="mc-art-cube"><span className="mc-cube-top"/><span className="mc-cube-left"/><span className="mc-cube-right"/></div><span className="mc-art-orbit-one">✧</span><span className="mc-art-orbit-two">✦</span><span className="mc-art-caption">CRAFT YOUR OWN<br />POSSIBILITIES</span></div></section>
 
       <section className="mc-directory" aria-labelledby="mc-directory-heading"><div className="mc-directory-heading"><div><span className="mc-overline">EXPLORE THE WORKSHOP</span><h2 id="mc-directory-heading">从这里<span>开始</span></h2></div><label className="mc-version-switch"><span>游戏版本 <small>VERSION</small></span><select value={version} onChange={(event) => { setVersion(event.target.value); setCatalog(null); setDataError(""); }}>{MC_VERSIONS.map((entry) => <option key={entry} value={entry}>Java {entry}</option>)}</select></label></div><div className="mc-directory-grid">{CATEGORY_ITEMS.map((entry) => <a className={`mc-directory-card${entry.available ? " is-available" : ""}`} href={entry.href} key={entry.number}><span className="mc-directory-number">{entry.number} / {String(CATEGORY_ITEMS.length).padStart(2, "0")}</span><span className="mc-directory-icon" aria-hidden="true">{({ "01": "⚒", "02": "✦", "03": "⌖", "04": "◈", "05": "♙", "06": "✳", "07": "✚", "08": "◇", "09": "▣", "10": "⊞", "11": "☀", "12": "♞" } as Record<string, string>)[entry.number]}</span><strong>{entry.name}</strong><small>{entry.detail}</small><span className="mc-directory-arrow">{entry.available ? "↗" : "逐步开放"}</span></a>)}</div><div className="mc-data-note"><span className="mc-data-indicator" /> {dataError || (catalog ? `已载入 Java ${version} 数据 · ${itemCount} 种物品 · ${catalog.enchantments.length} 种附魔${catalog.blocks ? ` · ${catalog.blocks.length} 种方块` : ""}` : "正在读取版本数据…")}</div></section>
 
@@ -180,7 +214,8 @@ export default function McWorkbench() {
       <SummonTool version={version} catalog={catalog} />
 
       <section className="mc-upcoming mc-section" id="upcoming"><span className="mc-overline">MORE TO CRAFT</span><h2>下一站，还有更多<span>可能。</span></h2><p>数据包制作、结构蓝图、更多指令生成器等工具会依次加入工坊。每个工具都会保留清晰的版本与适用范围说明。</p><div className="mc-upcoming-stamp">WORK IN PROGRESS <span>✳</span></div></section>
-      <footer className="mc-footer"><Link href="/">← 返回 Pkqa Center</Link><span>MC 工具工坊 · Made by GloryPkqa</span><a href="https://github.com/PrismarineJS/minecraft-data" target="_blank" rel="noopener noreferrer">物品数据：PrismarineJS / minecraft-data ↗</a></footer></div>
+      <footer className="mc-footer"><Link href="/">← 返回 Pkqa Center</Link><span>MC 工具工坊 · 非官方 Minecraft 爱好者工具 · Made by GloryPkqa</span><a href="https://github.com/PrismarineJS/minecraft-data" target="_blank" rel="noopener noreferrer">物品数据：PrismarineJS / minecraft-data ↗</a></footer></div>
+      <QuickReturn />
     </main>
   );
 }

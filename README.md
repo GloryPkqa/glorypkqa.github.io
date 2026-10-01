@@ -19,15 +19,15 @@ pnpm dev
 | 工具 | 数据与运行方式 |
 | --- | --- |
 | `/give` 物品与附魔 | 浏览器本地；物品和附魔数据由 `minecraft-data` 在构建时生成 |
-| 颜色文字与 `/tellraw` | 浏览器本地；按 Java 1.21.5 的文本格式分界 |
+| 颜色文字与 `/tellraw` | 浏览器本地；支持渐变、AB 交替和逐字上色，按 Java 1.21.5 的文本格式分界 |
 | 主世界与下界坐标 | 浏览器本地 |
-| Java / 基岩版服务器状态 | 浏览器调用 [mcstatus.io](https://mcstatus.io/docs)，结果由接口缓存 |
-| Java 玩家 UUID 与皮肤 | 浏览器调用 [PlayerDB](https://playerdb.co/)；头像来自 Crafthead，皮肤来自 Mojang 贴图地址 |
+| Java / 基岩版服务器状态 | 浏览器优先调用 [mcstatus.io](https://mcstatus.io/docs)，未探测到在线响应时向 [MCSrvStat.us](https://api.mcsrvstat.us/) 复核；结果由接口缓存 |
+| Java 玩家 UUID、皮肤与已装备披风 | 浏览器调用 [PlayerDB](https://playerdb.co/)；头像来自 Crafthead，皮肤和披风来自 Mojang 贴图地址，可能存在缓存延迟 |
 | Java 版本动态 | 浏览器读取 [Mojang 官方版本目录](https://piston-meta.mojang.com/mc/game/version_manifest_v2.json) |
 | `/effect` 状态效果 | 浏览器本地；效果数据由 `minecraft-data` 在构建时生成 |
-| `/title` 标题、字幕与操作栏 | 浏览器本地；按 Java 1.21.5 的文本格式分界 |
+| `/title` 标题、字幕与操作栏 | 浏览器本地；三个区域独立配色，支持渐变、AB 交替和逐字上色，按 Java 1.21.5 的文本格式分界 |
 | `/setblock` 与 `/fill` | 浏览器本地；方块目录由 `minecraft-data` 在构建时生成，包含体积检查 |
-| 工作台配方查询 | 浏览器本地；显示数据源收录的有序和无序合成方案 |
+| 工作台配方查询 | 浏览器本地；按大类、小类和中英文名称查找，显示图标和数据源收录的有序、无序合成方案 |
 | 时间、天气与难度 | 浏览器本地；生成 `/time`、`/weather`、`/difficulty` 指令 |
 | 实体召唤与刷怪蛋 | 浏览器本地；实体目录由 `minecraft-data` 在构建时生成，刷怪蛋按物品目录确认 |
 
@@ -48,4 +48,6 @@ pnpm build
 
 ## 数据与致谢
 
-物品、附魔、效果、方块、实体和合成配方目录来自 MIT 许可的 [PrismarineJS/minecraft-data](https://github.com/PrismarineJS/minecraft-data)。图形装饰由本站 CSS 绘制。项目没有直接复制其他 Minecraft 工具网站的界面或代码。
+物品、附魔、效果、方块、实体和合成配方目录来自 MIT 许可的 [PrismarineJS/minecraft-data](https://github.com/PrismarineJS/minecraft-data)。简体中文译名在构建前由 [Mojang 版本资源目录](https://piston-meta.mojang.com/mc/game/version_manifest_v2.json) 中对应版本的语言文件生成，并校验 SHA-1。配方分类与大部分图标来自 [Block Render](https://blockrender.dev/)；部分特殊物品图标来自 MIT 许可的 [Webisso/minecraft-item-icons](https://github.com/Webisso/minecraft-item-icons)，其余少量新版物品用本站 CSS 占位图。外部图标源可能停机、变更或与所选游戏版本外观不一致。图形装饰由本站 CSS 绘制。本站是非官方爱好者工具，与 Mojang、Microsoft 无关联。
+
+更新本地化、分类或补充图标索引时，可分别运行 `node scripts/update-mc-locales.mjs`、`node scripts/update-mc-item-categories.mjs`、`node scripts/update-mc-fallback-icons.mjs`，再运行 `pnpm mc:data`。日常构建读取仓库中的已生成索引，无需访问这些外部接口。
