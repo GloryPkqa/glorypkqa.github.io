@@ -44,7 +44,7 @@ export default function SiteExperience() {
       <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
         <a className="wordmark" href="#home" aria-label="Pkqa Center 首页"><span className="mark"><Image src="/avatar.jpg" alt="" width={38} height={38} /></span><span>Pkqa<span className="wordmark-light"> Center.</span></span></a>
         <nav className="desktop-nav" aria-label="主导航">
-          <a href="#home">首页</a><a href="#about">关于</a><a href="#interests">兴趣</a><a href="#links">链接</a>
+          <a href="#home">首页</a><a href="#about">关于</a><a href="#interests">兴趣</a><a href="#links">链接</a><a href="/tools">MC 工具</a>
         </nav>
         <div className="header-actions"><span className="header-status"><span className="status-dot" /> MY LITTLE SPACE</span><ThemeToggle /></div>
         <motion.span className="scroll-progress" style={{ scaleX: scrollYProgress }} aria-hidden="true" />
@@ -58,6 +58,7 @@ export default function SiteExperience() {
           <motion.p className="hero-description" variants={reveal}>玩游戏、听音乐，也偶尔折腾点有意思的东西。</motion.p>
           <motion.div className="hero-actions" variants={reveal}>
             <a className="primary-link" href="#about">随便逛逛 <span aria-hidden="true">↘</span></a>
+            <a className="home-tools-link" href="/tools">MC 工具工坊 <span aria-hidden="true">↗</span></a>
             <span className="hero-handle">PERSONAL SPACE <b>·</b> BY GLORYPKQA</span>
           </motion.div>
         </motion.div>

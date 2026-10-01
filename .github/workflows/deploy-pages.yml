@@ -30,6 +30,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm check:mc
+      - run: pnpm lint
       - run: pnpm build
       - run: touch out/.nojekyll
       - uses: actions/configure-pages@v5

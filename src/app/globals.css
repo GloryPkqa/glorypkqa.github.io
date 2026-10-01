@@ -117,6 +117,8 @@ main::after {
 .primary-link { display: inline-flex; min-height: 43px; align-items: center; gap: 21px; padding: 0 17px; border: 1px solid var(--line-strong); border-radius: 4px; background: var(--surface); font-size: 12px; transition: background .2s ease, border-color .2s ease, gap .2s ease, transform .2s ease; }
 .primary-link:hover { gap: 27px; border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); background: var(--surface-strong); transform: translateY(-2px); }
 .primary-link span { color: var(--accent); font-size: 15px; }
+.home-tools-link { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); font-size: 11px; transition: gap .2s ease, color .2s ease; }
+.home-tools-link:hover { gap: 11px; color: var(--ink); }
 .hero-handle { color: var(--muted); font-size: 8px; letter-spacing: .13em; }
 .hero-handle b { padding-inline: 4px; color: var(--accent); }
 .hero-aside { position: relative; width: 286px; aspect-ratio: 1; justify-self: end; display: grid; place-items: center; margin: 25px 10px 0 0; }
@@ -233,7 +235,7 @@ main::after {
   .site-header, .site-header.is-scrolled { height: 62px; padding-inline: 21px; grid-template-columns: 1fr auto auto; gap: 17px; }
   .wordmark { font-size: 13px; gap: 8px; }
   .mark { width: 30px; height: 30px; }
-  .desktop-nav { gap: clamp(11px, 4vw, 20px); }
+  .desktop-nav { gap: clamp(7px, 2.8vw, 16px); }
   .desktop-nav a { font-size: 10px; }
   .theme-toggle { width: 32px; height: 32px; }
   .theme-toggle svg { width: 15px; height: 15px; }
@@ -244,7 +246,9 @@ main::after {
   .hero h1 { margin: 25px 0 20px; font-size: clamp(59px, 12.2vw, 78px); letter-spacing: -.09em; }
   .hero-subtitle { margin-top: 23px; font-size: 18px; }
   .hero-subtitle span { font-size: 12px; }
-  .hero-actions { margin-top: 29px; gap: 13px; }
+  .hero-actions { margin-top: 29px; gap: 13px; flex-wrap: wrap; }
+  .home-tools-link { white-space: nowrap; }
+  .hero-handle { flex-basis: 100%; margin-top: 5px; }
   .primary-link { min-height: 41px; padding-inline: 14px; gap: 15px; font-size: 11px; }
   .hero-handle { font-size: 7px; letter-spacing: .08em; }
   .hero-aside { position: absolute; width: 145px; top: 88px; right: 0; bottom: auto; margin: 0; opacity: .78; }
@@ -292,7 +296,7 @@ main::after {
 @media (max-width: 380px) {
   .section-wrap { width: calc(100% - 34px); }
   .site-header, .site-header.is-scrolled { padding-inline: 17px; gap: 11px; }
-  .desktop-nav { gap: 10px; }
+  .desktop-nav { gap: 7px; }
   .desktop-nav a { font-size: 9px; }
   .wordmark-light { display: none; }
   .hero h1 { font-size: 57px; }

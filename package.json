@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/generate-mc-data.mjs && next build",
+    "mc:data": "node scripts/generate-mc-data.mjs",
+    "check:mc": "node scripts/verify-mc-commands.mjs",
     "start": "next start",
     "lint": "eslint"
   },
@@ -21,6 +23,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
+    "minecraft-data": "^3.117.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

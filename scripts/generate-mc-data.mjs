@@ -1,0 +1,35 @@
+import { createRequire } from "node:module";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+
+const require = createRequire(import.meta.url);
+const minecraftData = require("minecraft-data");
+const output = join(process.cwd(), "public", "mc-data");
+const versions = ["1.20.4", "1.20.6", "1.21.5", "1.21.8", "26.1"];
+
+await mkdir(output, { recursive: true });
+
+for (const version of versions) {
+  const data = minecraftData(version);
+  if (!data?.itemsArray?.length || !data?.enchantmentsArray?.length || !data?.blocksArray?.length) {
+    throw new Error(`Minecraft data missing for ${version}`);
+  }
+
+  const payload = {
+    version,
+    sourceVersion: data.version.minecraftVersion,
+    items: data.itemsArray
+      .filter((item) => item.name !== "air")
+      .map(({ name, displayName, stackSize }) => ({ name, displayName, stackSize })),
+    blocks: data.blocksArray.map(({ name, displayName }) => ({ name, displayName })),
+    enchantments: data.enchantmentsArray.map(({ name, displayName, maxLevel, exclude, category }) => ({
+      name, displayName, maxLevel, exclude, category,
+    })),
+    effects: data.effectsArray.map(({ name, displayName, type }) => ({
+      name: name === "BadLuck" ? "unluck" : name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase(), displayName, type,
+    })),
+  };
+
+  await writeFile(join(output, `${version}.json`), JSON.stringify(payload));
+  console.log(`Generated ${version}: ${payload.items.length} items, ${payload.enchantments.length} enchantments`);
+}
