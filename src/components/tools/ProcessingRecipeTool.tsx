@@ -42,7 +42,7 @@ export default function ProcessingRecipeTool({ version, catalog }: { version: st
   const [method, setMethod] = useState("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState("");
-  const [limit, setLimit] = useState(60);
+  const [limit, setLimit] = useState(24);
   const items = useMemo(() => new Map(catalog?.items.map((entry) => [entry.name, entry]) ?? []), [catalog]);
   const name = (value: string | null) => {
     if (!value) return "依底材变化";
@@ -72,19 +72,36 @@ export default function ProcessingRecipeTool({ version, catalog }: { version: st
     return <div className="mc-process-slot"><span>{label}</span>{options.length ? <><div>{icon(options[0])}<strong>{name(options[0])}</strong></div>{options.length > 1 && <small>或其他 {options.length - 1} 种材料</small>}</> : <div><strong>—</strong></div>}</div>;
   }
 
+  function jumpTo(id: string) {
+    document.getElementById(id)?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      block: "start",
+    });
+  }
+
   return <section className="mc-section" id="processing" aria-labelledby="processing-heading">
     <div className="mc-section-header"><div><span className="mc-overline">14 / RECIPE ATLAS</span><h2 id="processing-heading">进阶配方<span>查询器</span></h2></div><span className="mc-section-mark" aria-hidden="true">♨</span></div>
     <p className="mc-section-description">切换熔炉、高炉、烟熏炉、营火、切石机、锻造台和酿造台。配方和可选材料按当前 Java 版本筛选。</p>
-    <div className="mc-process-tabs" role="group" aria-label="配方设备">{STATIONS.map((entry) => <button type="button" key={entry.id} className={station === entry.id ? "active" : ""} aria-pressed={station === entry.id} onClick={() => { setStation(entry.id); setMethod("all"); setSelected(""); setQuery(""); }}><span>{entry.icon}</span>{entry.label}</button>)}</div>
-    <div className="mc-lab-grid"><div className="mc-form-panel"><div className="mc-form-section-label"><span>01</span> 查找配方</div>
-      {station === "furnace" && <div className="mc-recipe-subgroups" role="group" aria-label="熔炼设备"><button type="button" className={method === "all" ? "active" : ""} onClick={() => setMethod("all")}>全部</button>{Object.entries(COOKING).map(([id, label]) => <button type="button" key={id} className={method === id ? "active" : ""} onClick={() => setMethod(id)}>{label}</button>)}</div>}
-      <label className="mc-field mc-process-search"><span>中文 / English / 物品 ID</span><input value={query} onChange={(event) => { setQuery(event.target.value); setLimit(60); }} placeholder="搜索产物或材料" spellCheck={false} /></label>
-      <p className="mc-recipe-count">{station === "brewing" ? brew.length : visible.length} 条配方 · Java {version}</p>
-      <div className="mc-process-list">{station === "brewing" ? brew.map((entry, index) => <button type="button" key={`${entry.base}-${entry.ingredient}`} className={activeBrew === entry ? "active" : ""} onClick={() => setSelectedBrew(index)}>{icon(entry.ingredient)}<span><strong>{entry.result}</strong><small>{entry.english} · {entry.base}</small></span><b>↗</b></button>) : visible.slice(0, limit).map((entry) => <button type="button" key={entry.id} className={active === entry ? "active" : ""} onClick={() => setSelected(entry.id)}>{entry.result ? icon(entry.result) : <span className="mc-recipe-icon-fallback">⚒</span>}<span><strong>{entry.result ? name(entry.result).split(" · ")[0] : "盔甲纹饰"}</strong><small>{entry.result ? name(entry.result).split(" · ").slice(1).join(" · ") : "Armor Trim"} · {COOKING[entry.type] ?? (entry.type === "stonecutting" ? "切石机" : "锻造台")}</small></span><b>↗</b></button>)}</div>
-      {visible.length > limit && station !== "brewing" && <button type="button" className="mc-recipe-more" onClick={() => setLimit((value) => value + 60)}>显示更多配方 ↓</button>}
-      {(station === "brewing" ? !brew.length : !visible.length) && <p className="mc-field-hint">当前版本和搜索条件下没有匹配配方。</p>}
-    </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> RECIPE DETAIL</span><span>{STATIONS.find((entry) => entry.id === station)?.label} · {version}</span></div>
-      {station === "brewing" && activeBrew ? <><div className="mc-process-hero"><ItemIcon id="potion" item={items.get("potion")} size={48} /><div><strong>{activeBrew.result}</strong><small>{activeBrew.english}</small></div></div><div className="mc-process-flow">{ingredient("potion", `基底：${activeBrew.base}`)}<span>＋</span>{ingredient(activeBrew.ingredient, "酿造材料")}<span>→</span><div className="mc-process-slot"><span>结果</span><div><ItemIcon id="potion" item={items.get("potion")} /><strong>{activeBrew.result}</strong></div></div></div><p className="mc-output-note">酿造台需要烈焰粉燃料。此处展示基础药水路线；红石、萤石粉、火药和龙息可用于延长、强化或改变药水形态。</p></> : station !== "brewing" && active ? <><div className="mc-process-hero">{active.result ? icon(active.result) : <span className="mc-recipe-icon-fallback">⚒</span>}<div><strong>{active.result ? name(active.result).split(" · ")[0] : "盔甲纹饰"}</strong><small>{active.id.replaceAll("_", " ")}</small></div><b>× {active.count}</b></div><div className="mc-process-flow">{active.ingredient ? ingredient(active.ingredient, "原料") : <>{active.template && ingredient(active.template, "模板")}{ingredient(active.base, "底材")}{ingredient(active.addition, "添加材料")}</>}<span>→</span><div className="mc-process-slot"><span>产物</span><div>{active.result ? icon(active.result) : <span className="mc-recipe-icon-fallback">⚒</span>}<strong>{name(active.result)}</strong></div></div></div>{active.ticks !== null && <p className="mc-field-hint">加工时间 {active.ticks / 20} 秒 · 经验 {active.xp ?? 0}</p>}{active.type === "smithing_trim" && <p className="mc-field-hint">盔甲纹饰只改变外观，具体结果由所选底材与纹饰材料决定。</p>}<p className="mc-output-note">配方数据：<a href="https://github.com/misode/mcmeta" target="_blank" rel="noopener noreferrer">misode / mcmeta ↗</a>。带 # 的材料代表原版物品标签，可使用标签内的任意物品。</p></> : <div className="mc-lookup-empty"><span>♨</span><p>请选择一条配方查看材料与产物。</p></div>}
-    </aside></div>
+    <div className="mc-process-tabs" role="group" aria-label="配方设备">{STATIONS.map((entry) => <button type="button" key={entry.id} className={station === entry.id ? "active" : ""} aria-pressed={station === entry.id} onClick={() => { setStation(entry.id); setMethod("all"); setSelected(""); setSelectedBrew(0); setQuery(""); setLimit(24); }}><span>{entry.icon}</span>{entry.label}</button>)}</div>
+    <div className="mc-process-workspace">
+      <aside className="mc-output-panel mc-color-output mc-process-feature" id="mc-process-detail" aria-label="当前配方详情">
+        <div className="mc-output-top"><span><i /> RECIPE DETAIL</span><span>{STATIONS.find((entry) => entry.id === station)?.label} · {version}</span></div>
+        {station === "brewing" && activeBrew ? <>
+          <div className="mc-process-feature-main"><div className="mc-process-hero"><ItemIcon id="potion" item={items.get("potion")} size={48} /><div><strong>{activeBrew.result}</strong><small>{activeBrew.english}</small></div></div><div className="mc-process-flow mc-process-flow-brewing">{ingredient("potion", `基底：${activeBrew.base}`)}<span>＋</span>{ingredient(activeBrew.ingredient, "酿造材料")}<span>→</span><div className="mc-process-slot"><span>结果</span><div><ItemIcon id="potion" item={items.get("potion")} /><strong>{activeBrew.result}</strong></div></div></div></div>
+          <div className="mc-process-feature-foot"><p>酿造台需要烈焰粉燃料。此处展示基础药水路线；红石、萤石粉、火药和龙息可用于延长、强化或改变药水形态。</p><button type="button" onClick={() => jumpTo("mc-process-explorer")}>继续浏览配方 ↓</button></div>
+        </> : station !== "brewing" && active ? <>
+          <div className="mc-process-feature-main"><div className="mc-process-hero">{active.result ? icon(active.result) : <span className="mc-recipe-icon-fallback">⚒</span>}<div><strong>{active.result ? name(active.result).split(" · ")[0] : "盔甲纹饰"}</strong><small>{active.result ? name(active.result).split(" · ").slice(1).join(" · ") : "Armor Trim"}</small><small>{active.id.replaceAll("_", " ")}</small></div><b>× {active.count}</b></div><div className={`mc-process-flow mc-process-flow-${station}`}>{active.ingredient ? ingredient(active.ingredient, "原料") : <>{active.template && ingredient(active.template, "模板")}{ingredient(active.base, "底材")}{ingredient(active.addition, "添加材料")}</>}<span>→</span><div className="mc-process-slot"><span>产物</span><div>{active.result ? icon(active.result) : <span className="mc-recipe-icon-fallback">⚒</span>}<strong>{name(active.result)}</strong></div></div></div></div>
+          <div className="mc-process-feature-foot"><p>{active.ticks !== null && <>加工时间 {active.ticks / 20} 秒 · 经验 {active.xp ?? 0}<br /></>}{active.type === "smithing_trim" && <>盔甲纹饰只改变外观，结果由底材与纹饰材料决定。<br /></>}配方数据：<a href="https://github.com/misode/mcmeta" target="_blank" rel="noopener noreferrer">misode / mcmeta ↗</a>。带 # 的材料是原版物品标签。</p><button type="button" onClick={() => jumpTo("mc-process-explorer")}>继续浏览配方 ↓</button></div>
+        </> : <div className="mc-lookup-empty"><span>♨</span><p>请选择一条配方查看材料与产物。</p></div>}
+      </aside>
+      <div className="mc-form-panel mc-process-explorer" id="mc-process-explorer"><div className="mc-form-section-label"><span>02</span> 查找配方</div>
+        {station === "furnace" && <div className="mc-recipe-subgroups" role="group" aria-label="熔炼设备"><button type="button" className={method === "all" ? "active" : ""} onClick={() => setMethod("all")}>全部</button>{Object.entries(COOKING).map(([id, label]) => <button type="button" key={id} className={method === id ? "active" : ""} onClick={() => setMethod(id)}>{label}</button>)}</div>}
+        <label className="mc-field mc-process-search"><span>中文 / English / 物品 ID</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSelectedBrew(0); setLimit(24); }} placeholder="搜索产物或材料" spellCheck={false} /></label>
+        <p className="mc-recipe-count">{station === "brewing" ? brew.length : visible.length} 条配方 · Java {version} · 点击卡片查看详情</p>
+        <div className="mc-process-list">{station === "brewing" ? brew.map((entry, index) => <button type="button" key={`${entry.base}-${entry.ingredient}`} className={activeBrew === entry ? "active" : ""} onClick={() => { setSelectedBrew(index); jumpTo("mc-process-detail"); }}>{icon(entry.ingredient)}<span><strong>{entry.result}</strong><small>{entry.english} · {entry.base}</small></span><b>↑</b></button>) : visible.slice(0, limit).map((entry) => <button type="button" key={entry.id} className={active === entry ? "active" : ""} onClick={() => { setSelected(entry.id); jumpTo("mc-process-detail"); }}>{entry.result ? icon(entry.result) : <span className="mc-recipe-icon-fallback">⚒</span>}<span><strong>{entry.result ? name(entry.result).split(" · ")[0] : "盔甲纹饰"}</strong><small>{entry.result ? name(entry.result).split(" · ").slice(1).join(" · ") : "Armor Trim"} · {COOKING[entry.type] ?? (entry.type === "stonecutting" ? "切石机" : "锻造台")}</small></span><b>↑</b></button>)}</div>
+        {visible.length > limit && station !== "brewing" && <button type="button" className="mc-recipe-more" onClick={() => setLimit((value) => value + 24)}>显示更多配方 ↓</button>}
+        {(station === "brewing" ? !brew.length : !visible.length) && <p className="mc-field-hint">当前版本和搜索条件下没有匹配配方。</p>}
+      </div>
+    </div>
   </section>;
 }
