@@ -29,6 +29,7 @@ pnpm dev
 | `/setblock` 与 `/fill` | 浏览器本地；方块目录由 `minecraft-data` 在构建时生成，包含体积检查 |
 | 工作台配方查询 | 浏览器本地；显示数据源收录的有序和无序合成方案 |
 | 时间、天气与难度 | 浏览器本地；生成 `/time`、`/weather`、`/difficulty` 指令 |
+| 实体召唤与刷怪蛋 | 浏览器本地；实体目录由 `minecraft-data` 在构建时生成，刷怪蛋按物品目录确认 |
 
 指令数据覆盖 Java `1.20.4`、`1.20.6`、`1.21.5`、`1.21.8`、`26.1`。Mojang 版本动态与本地指令数据是两套独立信息；出现更新的游戏版本时，需要先更新 `minecraft-data`、核对指令格式并重新构建，才开放该版本的指令生成。
 
@@ -47,4 +48,4 @@ pnpm build
 
 ## 数据与致谢
 
-物品、附魔、效果、方块和合成配方目录来自 MIT 许可的 [PrismarineJS/minecraft-data](https://github.com/PrismarineJS/minecraft-data)。图形装饰由本站 CSS 绘制。项目没有直接复制其他 Minecraft 工具网站的界面或代码。
+物品、附魔、效果、方块、实体和合成配方目录来自 MIT 许可的 [PrismarineJS/minecraft-data](https://github.com/PrismarineJS/minecraft-data)。图形装饰由本站 CSS 绘制。项目没有直接复制其他 Minecraft 工具网站的界面或代码。

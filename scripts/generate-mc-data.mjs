@@ -32,6 +32,9 @@ for (const version of versions) {
       .filter((item) => item.name !== "air")
       .map(({ name, displayName, stackSize }) => ({ name, displayName, stackSize })),
     blocks: data.blocksArray.map(({ name, displayName }) => ({ name, displayName })),
+    entities: data.entitiesArray
+      .filter(({ type }) => ["mob", "animal", "living", "ambient", "hostile", "water_creature", "passive"].includes(type))
+      .map(({ name, displayName, type }) => ({ name, displayName, type })),
     recipes,
     enchantments: data.enchantmentsArray.map(({ name, displayName, maxLevel, exclude, category }) => ({
       name, displayName, maxLevel, exclude, category,
