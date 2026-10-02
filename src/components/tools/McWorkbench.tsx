@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import useCopyFeedback from "@/lib/useCopyFeedback";
 import ThemeToggle from "@/components/ThemeToggle";
 import ColorTool from "@/components/tools/ColorTool";
 import CoordinateTool from "@/components/tools/CoordinateTool";
@@ -45,20 +46,9 @@ const CATEGORY_ITEMS = [
   { name: "数据包制作", detail: "DATAPACK FORGE", number: "15", href: "#datapack", minVersion: "1.16" },
 ];
 
-function CopyButton({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  return <button className="mc-copy-button" type="button" onClick={copy} disabled={!value}>{copied ? "已复制 ✓" : "复制指令 ↗"}</button>;
+export function CopyButton({ value }: { value: string }) {
+  const { copy, isCopied } = useCopyFeedback();
+  return <button className="mc-copy-button" type="button" onClick={() => void copy(value)} disabled={!value}>{isCopied(value) ? "已复制 ✓" : "复制指令 ↗"}</button>;
 }
 
 function CraftStartButton({ href }: { href: string }) {
@@ -81,7 +71,7 @@ function CraftStartButton({ href }: { href: string }) {
   </a>;
 }
 
-function QuickReturn() {
+export function QuickReturn() {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const update = () => setVisible(window.scrollY > 650);
@@ -89,9 +79,9 @@ function QuickReturn() {
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
   }, []);
-  return <nav className={`mc-quick-return${visible ? " is-visible" : ""}`} aria-label="页面快速返回">
-    <a href="#top" title="返回顶部" onClick={(event) => { event.preventDefault(); window.history.pushState(null, "", "#top"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span aria-hidden="true">↑</span> 返回顶部</a>
-    <a href="#mc-directory-heading" title="工具目录" onClick={(event) => { event.preventDefault(); document.getElementById("mc-directory-heading")?.scrollIntoView({ behavior: "smooth" }); }}><span aria-hidden="true">▦</span> 工具目录</a>
+  return <nav className={`mc-quick-return${visible ? " is-visible" : ""}`} aria-label="页面快速返回" aria-hidden={!visible}>
+    <a href="#top" tabIndex={visible ? 0 : -1} title="返回顶部" onClick={(event) => { event.preventDefault(); window.history.pushState(null, "", "#top"); window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }); }}><span aria-hidden="true">↑</span> 返回顶部</a>
+    <a href="#mc-directory-heading" tabIndex={visible ? 0 : -1} title="工具目录" onClick={(event) => { event.preventDefault(); document.getElementById("mc-directory-heading")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }); }}><span aria-hidden="true">▦</span> 工具目录</a>
   </nav>;
 }
 

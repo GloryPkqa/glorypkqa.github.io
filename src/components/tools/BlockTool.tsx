@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import useCopyFeedback from "@/lib/useCopyFeedback";
 import { versionAtLeast, type McCatalog } from "@/lib/mc/give";
 
 type Point = [string, string, string];
@@ -32,7 +33,7 @@ export default function BlockTool({ version, catalog }: { version: string; catal
   const [end, setEnd] = useState<Point>(["9", "68", "9"]);
   const [fillMode, setFillMode] = useState<FillMode>("replace");
   const [setMode, setSetMode] = useState("replace");
-  const [copied, setCopied] = useState("");
+  const { copy, isCopied } = useCopyFeedback();
 
   const blockId = block.trim().toLowerCase().replace(/^minecraft:/, "");
   const matchingBlock = catalog?.blocks?.find((entry) => entry.name === blockId);
@@ -49,11 +50,6 @@ export default function BlockTool({ version, catalog }: { version: string; catal
     ? `/fill ${from.join(" ")} ${to.join(" ")} minecraft:${blockId}${legacy ? ` 0 ${fillMode}` : fillMode === "replace" ? "" : ` ${fillMode}`}`
     : "";
 
-  async function copy(value: string, key: string) {
-    try { await navigator.clipboard.writeText(value); setCopied(key); window.setTimeout(() => setCopied(""), 1600); }
-    catch { setCopied(""); }
-  }
-
   return <section className="mc-section" id="blocks" aria-labelledby="blocks-heading">
     <div className="mc-section-header"><div><span className="mc-overline">09 / BUILDER DESK</span><h2 id="blocks-heading">方块放置与区域填充<span>指令生成器</span></h2></div><span className="mc-section-mark" aria-hidden="true">▣</span></div>
     <p className="mc-section-description">从当前 Java 版本的方块目录选材，输入两个角的绝对坐标，生成 /setblock 与 /fill 指令，并预估区域体积。</p>
@@ -67,7 +63,7 @@ export default function BlockTool({ version, catalog }: { version: string; catal
       <p className="mc-field-hint">起点用于 /setblock；/fill 使用起点与终点，两个角可以按任意方向填写。这里生成方块的默认状态；朝向、水浸等方块状态暂未加入。</p>
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> BUILD PREVIEW</span><span>JAVA · {version}</span></div><div className="mc-block-display"><span aria-hidden="true">▣</span><strong>{matchingBlock?.displayName ?? "选择方块"}</strong><small>{matchingBlock ? `minecraft:${matchingBlock.name}` : "minecraft:..."}</small><div>区域体积 <b>{volume !== null && Number.isSafeInteger(volume) ? volume.toLocaleString("zh-CN") : "—"}</b> 格</div></div>
       {!from && <p className="mc-output-warning">起点的 X、Y、Z 都需要填写整数。</p>}{!to && <p className="mc-output-warning">终点的 X、Y、Z 都需要填写整数。</p>}{volume !== null && volume > 32768 && <p className="mc-output-warning">⚠ 区域超过 32,768 方块默认上限。{limitHint}</p>}
-      {[{ key: "set", name: "放置单个方块", command: setCommand }, { key: "fill", name: "填充区域", command: fillCommand }].map((entry) => <div className="mc-color-result" key={entry.key}><div className="mc-code-heading"><span>{entry.name}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.command || "// 选择方块并填写有效坐标"}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.command} onClick={() => copy(entry.command, entry.key)}>{copied === entry.key ? "已复制 ✓" : "复制指令 ↗"}</button></div>)}
+      {[{ key: "set", name: "放置单个方块", command: setCommand }, { key: "fill", name: "填充区域", command: fillCommand }].map((entry) => <div className="mc-color-result" key={entry.key}><div className="mc-code-heading"><span>{entry.name}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.command || "// 选择方块并填写有效坐标"}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.command} onClick={() => copy(entry.command)}>{isCopied(entry.command) ? "已复制 ✓" : "复制指令 ↗"}</button></div>)}
       <p className="mc-output-note">指令需要相应权限。区域填充会改变世界，请在游戏内检查坐标与方块后执行。</p>
     </aside></div>
   </section>;

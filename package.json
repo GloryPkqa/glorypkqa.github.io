@@ -12,6 +12,7 @@
     "check:player": "node scripts/verify-player-lookup.mjs",
     "check:audit": "node scripts/verify-mc-audit.mjs && node scripts/verify-mc-interactions.mjs",
     "check:deep": "node scripts/verify-mc-deep.mjs",
+    "check:third": "node scripts/verify-mc-third-pass.mjs",
     "start": "next start",
     "lint": "eslint"
   },

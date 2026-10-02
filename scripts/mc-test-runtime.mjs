@@ -9,7 +9,7 @@ export function loadTs(relative, imports = {}) {
   const source = readFileSync(url, "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
   const exports = {};
-  new Function("exports", "require", code)(exports, (name) => imports[name] ?? (name.startsWith("@/") ? loadTs(`../src/${name.slice(2)}.ts`) : require(name)));
+  new Function("exports", "require", code)(exports, (name) => imports[name] ?? (name.startsWith("@/") ? loadTs(`../src/${name.slice(2)}.ts`, imports) : require(name)));
   if (!Object.keys(imports).length) cache.set(url.href, exports);
   return exports;
 }

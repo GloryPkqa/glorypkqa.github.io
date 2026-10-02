@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { loadTs } from "./mc-test-runtime.mjs";
 
 const require = createRequire(import.meta.url);
 const ts = require("typescript");
@@ -28,6 +29,7 @@ function mount() {
   const exports = {};
   new Function("exports", "require", "window", "fetch", code)(exports, (name) => {
     if (name === "react") return react;
+    if (name === "@/lib/useCopyFeedback") return loadTs("../src/lib/useCopyFeedback.ts", { react });
     if (name === "@/components/tools/CapePreview") return { default: () => null };
     return require(name);
   }, window, fetch);

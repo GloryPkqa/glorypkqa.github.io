@@ -160,6 +160,7 @@ html:not([data-theme="light"]) .mc-tools {
 .mc-player-profile .mc-profile-cape { display: grid; place-items: center; width: 118px; height: 155px; overflow: hidden; border: 1px solid rgba(184,224,163,.3); background: radial-gradient(circle at 50% 35%, #365942, #1a2d22 78%); }
 .mc-cape-preview { display: grid; place-items: center; width: 100%; height: 100%; }
 .mc-cape-preview canvas { display: block; width: 100%; height: 100%; }
+.mc-cape-preview canvas[hidden] { display: none; }
 .mc-cape-preview img { width: 72px; height: 108px; object-fit: contain; image-rendering: pixelated; }
 .mc-profile-cape-empty { max-width: 80px; color: #95aa98; font-size: 10px; text-align: center; line-height: 1.5; }
 .mc-potion-toggle { margin: 0 0 19px; padding: 11px 14px; border: 1px solid var(--mc-line); background: var(--mc-panel-soft); }
@@ -193,6 +194,8 @@ html:not([data-theme="light"]) .mc-tools {
 .mc-text-paints input { width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; }
 .mc-text-paints .mc-text-clear { margin-left: auto; padding: 6px 8px; border: 1px solid var(--mc-line); background: var(--mc-panel); color: var(--mc-muted); font-size: 10px; cursor: pointer; }
 .mc-title-preview > span span,.mc-title-preview > small span,.mc-title-preview > em span { display: inline; }
+.mc-title-preview > span,.mc-title-preview > small,.mc-title-preview > em,.mc-chat-preview > div { white-space: pre-wrap; }
+.mc-title-preview > span,.mc-title-preview > small,.mc-title-preview > em { max-width: 100%; overflow-wrap: anywhere; }
 .mc-recipe-groups { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-top: 17px; }
 .mc-recipe-groups button { display: flex; justify-content: space-between; align-items: center; gap: 4px; min-width: 0; padding: 10px 11px; border: 1px solid var(--mc-line); background: var(--mc-panel-soft); color: var(--mc-ink); font-size: 11px; font-weight: 650; cursor: pointer; }
 .mc-recipe-groups button small { margin: 0; font: 9px Consolas,monospace; }

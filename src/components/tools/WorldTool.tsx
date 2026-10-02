@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import useCopyFeedback from "@/lib/useCopyFeedback";
 
 const TIMES = [
   { label: "日出", ticks: 0 },
@@ -33,7 +34,7 @@ export default function WorldTool() {
   const [ticks, setTicks] = useState("1000");
   const [weather, setWeather] = useState<(typeof WEATHER)[number]["id"]>("clear");
   const [difficulty, setDifficulty] = useState<(typeof DIFFICULTY)[number]["id"]>("normal");
-  const [copied, setCopied] = useState("");
+  const { copy, isCopied } = useCopyFeedback();
 
   const timeValid = /^\d+$/.test(ticks.trim()) && Number(ticks) <= 23999;
   const time = timeValid ? Number(ticks) : null;
@@ -44,14 +45,6 @@ export default function WorldTool() {
     { id: "weather", label: "切换天气", value: `/weather ${weather}` },
     { id: "difficulty", label: "设定难度", value: `/difficulty ${difficulty}` },
   ];
-
-  async function copy(value: string, id: string) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(id);
-      window.setTimeout(() => setCopied(""), 1600);
-    } catch { setCopied(""); }
-  }
 
   return <section className="mc-section" id="world" aria-labelledby="world-heading">
     <div className="mc-section-header"><div><span className="mc-overline">11 / WORLD CONTROL</span><h2 id="world-heading">时间、天气与难度<span>世界控制台</span></h2></div><span className="mc-section-mark" aria-hidden="true">☀</span></div>
@@ -68,7 +61,7 @@ export default function WorldTool() {
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> WORLD OUTPUT</span><span>JAVA EDITION</span></div>
       <div className="mc-world-preview"><span aria-hidden="true">{selectedWeather.icon}</span><strong>{time === null ? "--:--" : clockTime(time)}</strong><small>{selectedWeather.label} · {selectedDifficulty.label}难度</small></div>
       {!timeValid && <p className="mc-output-warning">时间刻度需要是 0 到 23999 之间的整数。</p>}
-      {commands.map((entry) => <div className="mc-color-result" key={entry.id}><div className="mc-code-heading"><span>{entry.label}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.value || "// 输入有效时间刻度"}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.value} onClick={() => copy(entry.value, entry.id)}>{copied === entry.id ? "已复制 ✓" : "复制指令 ↗"}</button></div>)}
+      {commands.map((entry) => <div className="mc-color-result" key={entry.id}><div className="mc-code-heading"><span>{entry.label}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.value || "// 输入有效时间刻度"}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.value} onClick={() => copy(entry.value)}>{isCopied(entry.value) ? "已复制 ✓" : "复制指令 ↗"}</button></div>)}
       <p className="mc-output-note">三条指令可分别执行，需要相应权限。天气命令仅影响允许天气变化的维度；服务器规则或插件可能覆盖设置。</p>
     </aside></div>
   </section>;

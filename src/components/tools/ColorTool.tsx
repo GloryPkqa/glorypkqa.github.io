@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import useCopyFeedback from "@/lib/useCopyFeedback";
 import TextStyleControls from "@/components/tools/TextStyleControls";
 import { coloredParts, defaultTextStyle, textComponent } from "@/lib/mc/textColors";
 
@@ -15,8 +16,8 @@ export default function ColorTool({ version }: { version: string }) {
   const [message, setMessage] = useState("欢迎来到 Pkqa Center!");
   const [colorCode, setColorCode] = useState("a");
   const [style, setStyle] = useState(() => defaultTextStyle());
-  const [copied, setCopied] = useState("");
-  const cleanMessage = message.replaceAll("§", "");
+  const { copy, isCopied } = useCopyFeedback();
+  const cleanMessage = message;
   const parts = coloredParts(cleanMessage, style);
   const modifiers = `${style.bold ? "l" : ""}${style.italic ? "o" : ""}`;
   const outputs = [
@@ -24,11 +25,6 @@ export default function ColorTool({ version }: { version: string }) {
     { title: "传统 § 颜色码", detail: "经典 16 色；不支持 RGB、渐变和逐字色", value: `§${colorCode}${modifiers ? `§${modifiers.split("").join("§")}` : ""}${cleanMessage}§r` },
     { title: "插件 & 颜色码", detail: "需要插件支持 & 代码；仅经典 16 色", value: `&${colorCode}${modifiers ? `&${modifiers.split("").join("&")}` : ""}${cleanMessage}&r` },
   ];
-
-  async function copy(value: string, key: string) {
-    try { await navigator.clipboard.writeText(value); setCopied(key); window.setTimeout(() => setCopied(""), 1600); }
-    catch { setCopied(""); }
-  }
 
   return <section className="mc-section" id="colors" aria-labelledby="colors-heading">
     <div className="mc-section-header"><div><span className="mc-overline">02 / TEXT STUDIO</span><h2 id="colors-heading">文字与颜色<span>生成器</span></h2></div><span className="mc-section-mark" aria-hidden="true">✧</span></div>
@@ -39,10 +35,10 @@ export default function ColorTool({ version }: { version: string }) {
       <div className="mc-color-grid">{COLORS.map(([label, code, hex]) => <button key={code} type="button" className={`mc-color-swatch${colorCode === code && style.mode === "solid" ? " active" : ""}`} title={`${label} · §${code}`} aria-label={`${label} §${code}`} aria-pressed={colorCode === code && style.mode === "solid"} onClick={() => { setColorCode(code); setStyle({ ...style, colorA: hex, mode: "solid" }); }}><span style={{ backgroundColor: hex }} /><small>§{code}</small></button>)}</div>
       <div className="mc-form-section-label"><span>02</span> 自定义配色</div>
       <TextStyleControls label="聊天文字" text={cleanMessage} style={style} onChange={setStyle} />
-      <p className="mc-field-hint">RGB、渐变、AB 交替和逐字色会写进 /tellraw。传统 § 与插件 & 代码只保留上方经典调色盘选中的颜色。</p>
+      <p className="mc-field-hint">RGB、渐变、AB 交替和逐字色会写进 /tellraw。传统 § 与插件 & 代码只保留上方经典调色盘选中的颜色。输入中的 § / & 格式码可能被游戏或插件再次解释。</p>
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> LIVE PREVIEW</span><span>JAVA · {version}</span></div>
       <div className="mc-chat-preview"><span className="mc-chat-label">MINECRAFT CHAT</span><div>{parts.length ? parts.map((part, index) => <span key={index} style={{ color: part.color, fontWeight: part.bold ? 800 : 400, fontStyle: part.italic ? "italic" : "normal" }}>{part.text}</span>) : <span>预览文字</span>}</div></div>
-      {outputs.map((output) => <div className="mc-color-result" key={output.title}><div className="mc-code-heading"><span>{output.title}</span><span>{output.detail}</span></div><pre className="mc-code-output"><code>{output.value}</code></pre><button className="mc-copy-button" type="button" onClick={() => copy(output.value, output.title)}>{copied === output.title ? "已复制 ✓" : "复制代码 ↗"}</button></div>)}
+      {outputs.map((output) => <div className="mc-color-result" key={output.title}><div className="mc-code-heading"><span>{output.title}</span><span>{output.detail}</span></div><pre className="mc-code-output"><code>{output.value}</code></pre><button className="mc-copy-button" type="button" onClick={() => copy(output.value)}>{isCopied(output.value) ? "已复制 ✓" : "复制代码 ↗"}</button></div>)}
     </aside></div>
   </section>;
 }

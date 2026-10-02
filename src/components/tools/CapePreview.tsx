@@ -6,7 +6,9 @@ import { useEffect, useRef, useState } from "react";
 export default function CapePreview({ skinUrl, capeUrl, playerName }: { skinUrl: string; capeUrl: string; playerName: string }) {
   const frame = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const [failed, setFailed] = useState(false);
+  const [failedResource, setFailedResource] = useState("");
+  const resource = `${skinUrl}\n${capeUrl}`;
+  const failed = failedResource === resource;
 
   useEffect(() => {
     let disposed = false;
@@ -28,10 +30,13 @@ export default function CapePreview({ skinUrl, capeUrl, playerName }: { skinUrl:
         resizeObserver.observe(frame.current);
         await Promise.all([viewer.loadSkin(skinUrl), viewer.loadCape(capeUrl)]);
         if (!disposed) viewer.render();
-      } catch { if (!disposed) setFailed(true); }
+      } catch {
+        resizeObserver?.disconnect(); viewer?.dispose(); viewer = undefined;
+        if (!disposed) setFailedResource(resource);
+      }
     })();
     return () => { disposed = true; resizeObserver?.disconnect(); viewer?.dispose(); };
-  }, [skinUrl, capeUrl]);
+  }, [skinUrl, capeUrl, resource]);
 
-  return <div className="mc-cape-preview" ref={frame} aria-label={`${playerName} 当前装备的披风`}>{failed ? <img src={capeUrl} width="64" height="96" alt={`${playerName} 的披风贴图`} /> : <canvas ref={canvas} role="img" aria-label={`${playerName} 的 3D 人物背面与披风`} />}</div>;
+  return <div className="mc-cape-preview" ref={frame} aria-label={`${playerName} 当前装备的披风`}><canvas hidden={failed} ref={canvas} role="img" aria-label={`${playerName} 的 3D 人物背面与披风`} />{failed && <img src={capeUrl} width="64" height="96" alt={`${playerName} 的披风贴图`} />}</div>;
 }

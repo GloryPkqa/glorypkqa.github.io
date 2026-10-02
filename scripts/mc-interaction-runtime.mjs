@@ -19,6 +19,7 @@ export function mount(path, initialProps = {}, options = {}) {
     useEffect(effect, deps) { const i = cursor++; if (!hooks[i] || !same(hooks[i].deps, deps)) { const cleanup = hooks[i]?.cleanup; hooks[i] = { deps, cleanup }; pendingEffects.set(i, effect); } },
   };
   globalThis.window = { setTimeout(callback, delay) { const id = ++timerId; timers.set(id, { callback, delay }); return id; }, clearTimeout(id) { timers.delete(id); } };
+  options.setupWindow?.(globalThis.window);
   globalThis.fetch = (url, { signal } = {}) => new Promise((resolve, reject) => requests.push({ url, signal, resolve, reject }));
   const imports = { react, "@/components/tools/TextStyleControls": { default: () => null }, "@/components/tools/RecipeTool": { ItemIcon: () => null, default: () => null }, "@/components/tools/CapePreview": { default: () => null } };
   if (path === "McWorkbench") {

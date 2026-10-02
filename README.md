@@ -44,12 +44,18 @@ pnpm dev
 pnpm check:mc
 pnpm check:expanded
 pnpm check:potion
+pnpm check:player
+pnpm check:audit
+pnpm check:deep
+pnpm check:third
 pnpm lint
 pnpm build
 ```
 
 `check:mc` 对照 Mojang 发布记录中的关键版本差异，检查旧 NBT、1.20.5 后的物品组件、1.21.5 后简化的附魔格式及附魔书。`check:expanded` 检查跨版本目录、数据包 ZIP 及 `/give` 产物属性导入；`check:potion` 检查 1.8.9 至 26.1 的多效果药水语法与旧版效果过滤。浏览器交互仍应在所选游戏版本内最终验证。
 草稿 PR 会运行相同的检查和静态构建；只有推送到 `main` 才触发 GitHub Pages 部署。
+
+`check:player` 检查玩家请求和超时；`check:audit` 做全版本生成、配方和交互回归；`check:deep` 检查切换版本与异常恢复；`check:third` 检查空格配色、方向计算、数值边界、异步复制、键盘导航和披风恢复。详见 [第三轮检测记录](docs/mc-third-qa-2026-10-02.md)。
 
 ## 数据与致谢
 
