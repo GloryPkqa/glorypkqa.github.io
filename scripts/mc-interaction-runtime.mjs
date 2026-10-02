@@ -32,6 +32,7 @@ export function mount(path, initialProps = {}, options = {}) {
     let tree, count = 0;
     do {
       assert.ok(count++ < 20, "Component did not settle"); dirty = false; cursor = 0; tree = component(props);
+      options.commit?.(tree);
       for (const [i, effect] of [...pendingEffects]) { pendingEffects.delete(i); hooks[i].cleanup?.(); hooks[i].cleanup = effect(); }
     } while (dirty);
     return tree;

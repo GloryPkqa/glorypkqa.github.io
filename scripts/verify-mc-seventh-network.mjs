@@ -235,6 +235,17 @@ respond(unordered.requests[0], unorderedManifest); await flush();
 checked("versionRecovery", () => { assert.equal(unordered.all("time").length, 8); assert.equal(unordered.all("time")[0].props.dateTime, "2026-12-01T00:00:00Z"); assert.equal(unordered.all("time").at(-1).props.dateTime, "2026-05-01T00:00:00Z"); assert.deepEqual(unorderedManifest.versions.map((entry) => entry.id), originalOrder); });
 unordered.edit(unordered.all("input")[0], true);
 checked("versionRecovery", () => { assert.equal(unordered.all("time").length, 8); assert.equal(unordered.all("time")[0].props.dateTime, "2027-01-01T00:00:00Z"); assert.equal(unordered.all("time").at(-1).props.dateTime, "2026-06-01T00:00:00Z"); }); unordered.unmount();
+for (const badResponse of ["json", "network"]) {
+  const ui = mount("VersionFeed"); ui.tick(0);
+  if (badResponse === "json") ui.requests[0].resolve({ ok: true, status: 200, json: async () => { throw new SyntaxError("Unexpected token < in JSON at position 0"); } });
+  else ui.requests[0].reject(new TypeError("Failed to fetch"));
+  await flush();
+  checked("versionRecovery", () => { assert.match(ui.text(), /版本目录暂时无法获取，请稍后刷新重试。/); assert.doesNotMatch(ui.text(), /Unexpected token|Failed to fetch/); });
+  checked("versionRecovery", () => assert.equal(ui.button("刷新").props.disabled, false));
+  ui.button("刷新").props.onClick(); respond(ui.requests[1], manifest); await flush();
+  checked("versionRecovery", () => { assert.equal(ui.all("time").length, 1); assert.doesNotMatch(ui.text(), /暂时无法获取|Unexpected token|Failed to fetch/); });
+  ui.unmount();
+}
 
 let mode = "fail", observers = [], viewers = [];
 class Viewer {
@@ -250,9 +261,12 @@ globalThis.ResizeObserver = class {
   disconnect() { this.disconnected = true; }
 };
 function capeMount() {
-  const ui = mount("CapePreview", { skinUrl: "skin-a", capeUrl: "cape-a", playerName: "A" }, { imports: { skinview3d: { SkinViewer: Viewer } } });
-  ui.all("canvas")[0].props.ref.current = {};
-  ui.all("div")[0].props.ref.current = { clientWidth: 100, clientHeight: 150 };
+  const frame = { clientWidth: 100, clientHeight: 150 }, canvas = {};
+  const ui = mount("CapePreview", { skinUrl: "skin-a", capeUrl: "cape-a", playerName: "A" }, {
+    imports: { skinview3d: { SkinViewer: Viewer } },
+    // Host refs are assigned during commit, before passive effects, as in React DOM.
+    commit(tree) { tree.props.ref.current = frame; tree.props.children[0].props.ref.current = canvas; },
+  });
   return ui;
 }
 const cape = capeMount(); await flush();
@@ -277,4 +291,34 @@ for (const result of ["resolve", "reject"]) {
   const pending = capeMount(); await flush(); const last = viewers.at(-1); pending.unmount(); last[result](result === "reject" ? new Error("late failure") : undefined); await flush();
   checked("capeRecovery", () => { assert.equal(last.disposals, 1); assert.equal(last.renders, 0); });
 }
+const intersections = [];
+globalThis.IntersectionObserver = class {
+  constructor(callback, options) { this.callback = callback; this.options = options; this.disconnected = false; intersections.push(this); }
+  observe(target) { this.target = target; }
+  disconnect() { this.disconnected = true; }
+};
+mode = "success";
+const beforeDeferred = viewers.length;
+const deferred = capeMount(); await flush();
+const deferredObserver = intersections.at(-1);
+checked("capeRecovery", () => { assert.equal(viewers.length, beforeDeferred); assert.equal(deferredObserver.options.rootMargin, "160px"); assert.equal(deferredObserver.target.clientWidth, 100); });
+deferredObserver.callback([{ isIntersecting: false }]); await flush();
+checked("capeRecovery", () => assert.equal(viewers.length, beforeDeferred));
+deferredObserver.callback([{ isIntersecting: true }]); deferredObserver.callback([{ isIntersecting: true }]); await flush();
+checked("capeRecovery", () => { assert.equal(viewers.length, beforeDeferred + 1); assert.equal(deferredObserver.disconnected, true); });
+deferred.unmount();
+checked("capeRecovery", () => assert.equal(viewers.at(-1).disposals, 1));
+const beforeChanged = viewers.length;
+const changedDeferred = capeMount(); await flush(); const staleObserver = intersections.at(-1);
+changedDeferred.props({ skinUrl: "skin-b", capeUrl: "cape-b", playerName: "B" }); await flush(); const newerObserver = intersections.at(-1);
+staleObserver.callback([{ isIntersecting: true }]); await flush();
+checked("capeRecovery", () => { assert.equal(staleObserver.disconnected, true); assert.equal(viewers.length, beforeChanged); });
+newerObserver.callback([{ isIntersecting: true }]); await flush();
+checked("capeRecovery", () => assert.equal(viewers.length, beforeChanged + 1));
+changedDeferred.unmount();
+const beforeUnmounted = viewers.length;
+const unmountedDeferred = capeMount(); await flush(); const unmountedObserver = intersections.at(-1); unmountedDeferred.unmount();
+unmountedObserver.callback([{ isIntersecting: true }]); await flush();
+checked("capeRecovery", () => { assert.equal(unmountedObserver.disconnected, true); assert.equal(viewers.length, beforeUnmounted); });
+delete globalThis.IntersectionObserver;
 console.log("Seventh-pass network/profile checks passed:", JSON.stringify(counts), "total", Object.values(counts).reduce((a, b) => a + b, 0));

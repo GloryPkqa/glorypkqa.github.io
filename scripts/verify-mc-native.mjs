@@ -6,15 +6,16 @@ import {spawnSync} from 'node:child_process';
 // accepts an EULA, opens a port, creates a world, or executes commands.
 const option=name=>{const i=process.argv.indexOf(name);return i<0?undefined:process.argv[i+1];};
 const root=resolve('.'), dest=join(root,'coverage/native26');mkdirSync(dest,{recursive:true});
-const javaHome=option('--java-home')??process.env.JAVA_HOME;
+const requestedJavaHome=option('--java-home')??process.env.JAVA_HOME;
+const javaHome=requestedJavaHome?resolve(requestedJavaHome):undefined;
 const java=name=>javaHome?join(javaHome,'bin',name+(process.platform==='win32'?'.exe':'')):name;
-const run=(command,args,cwd=root)=>{const r=spawnSync(command,args,{cwd,encoding:'utf8',maxBuffer:10*1024*1024});if(r.stdout)process.stdout.write(r.stdout);if(r.stderr)process.stderr.write(r.stderr);if(r.error)throw r.error;if(r.status!==0)throw new Error(`${command} failed (${r.status})`);};
-const version=spawnSync(java('java'),['-version'],{encoding:'utf8'});
-if(version.error||version.status!==0||!/(?:version|openjdk) "25\./.test(version.stderr))throw new Error('Native audit needs JDK 25; use JAVA_HOME or --java-home');
+const run=(command,args,cwd=root)=>{const r=spawnSync(command,args,{cwd,encoding:'utf8',windowsHide:true,timeout:180000,maxBuffer:10*1024*1024});if(r.stdout)process.stdout.write(r.stdout);if(r.stderr)process.stderr.write(r.stderr);if(r.error)throw r.error;if(r.status!==0)throw new Error(`${command} failed (${r.status})`);};
+const version=spawnSync(java('java'),['-version'],{encoding:'utf8',windowsHide:true,timeout:15000});
+if(version.error||version.status!==0||!/(?:version|openjdk) "25(?:\.|"|\+)/.test(version.stderr))throw new Error('Native audit needs JDK 25; use JAVA_HOME or --java-home');
 const archive=join(root,'coverage/mc-26.1-server.jar');
 const expected='3872a7f07a1a595e651aef8b058dfc2bb3772f46';
 if(!existsSync(archive)){
- const response=await fetch(`https://piston-data.mojang.com/v1/objects/${expected}/server.jar`);
+ const response=await fetch(`https://piston-data.mojang.com/v1/objects/${expected}/server.jar`,{signal:AbortSignal.timeout(120000)});
  if(!response.ok)throw new Error(`Official server download failed: ${response.status}`);
  const contents=Buffer.from(await response.arrayBuffer());if(createHash('sha1').update(contents).digest('hex')!==expected)throw new Error('Official server checksum mismatch');writeFileSync(archive,contents);
 }

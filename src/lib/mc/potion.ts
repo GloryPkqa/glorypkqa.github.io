@@ -2,6 +2,12 @@ import { versionAtLeast, type McCatalog } from "@/lib/mc/give";
 
 export type PotionEffect = { name: string; duration: number; level: number };
 
+// MC-118857 was fixed in 1.20.5. Earlier PotionUtils/MobEffectInstance
+// loads the amplifier as a signed byte even after the 1.20.2 field rename.
+export function maxPotionLevelForVersion(version: string) {
+  return versionAtLeast(version, "1.20.5") ? 256 : 128;
+}
+
 export function makePotionCommand(input: {
   version: string;
   target: string;
@@ -16,7 +22,7 @@ export function makePotionCommand(input: {
   const legacyNumeric = !versionAtLeast(version, "1.20.2");
   const entries = selected.map(({ effect, duration, level }) => {
     const ticks = Math.max(1, Math.min(20_000_000, Math.floor((Number.isFinite(duration) ? duration : 1) * 20)));
-    const amplifier = Math.max(0, Math.min(legacyNumeric ? 127 : 255, Math.floor(Number.isFinite(level) ? level : 1) - 1));
+    const amplifier = Math.max(0, Math.min(maxPotionLevelForVersion(version) - 1, Math.floor(Number.isFinite(level) ? level : 1) - 1));
     if (legacyNumeric) return `{Id:${effect!.id}b,Amplifier:${amplifier}b,Duration:${ticks},ShowParticles:${hideParticles ? "0b" : "1b"}}`;
     return `{id:"minecraft:${effect!.name}",amplifier:${amplifier},duration:${ticks},show_particles:${!hideParticles}}`;
   });

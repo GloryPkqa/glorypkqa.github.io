@@ -1,0 +1,53 @@
+{
+  "provider": "Eclipse Adoptium / Temurin",
+  "apiDocumentation": "https://api.adoptium.net/",
+  "auditMode": "Portable SHA256-verified runtimes, small-heap -version only; no game or server execution.",
+  "runtimes": [
+    {
+      "major": 11,
+      "version": "11.0.32+101",
+      "openjdkVersion": "11.0.32.1+1",
+      "architecture": "x64",
+      "os": "windows",
+      "imageType": "jre",
+      "apiUrl": "https://api.adoptium.net/v3/assets/latest/11/hotspot?architecture=x64&image_type=jre&os=windows&vendor=eclipse",
+      "releaseName": "jdk-11.0.32.1+1",
+      "archive": {
+        "name": "OpenJDK11U-jre_x64_windows_hotspot_11.0.32.1_1.zip",
+        "url": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.32.1%2B1/OpenJDK11U-jre_x64_windows_hotspot_11.0.32.1_1.zip",
+        "sha256": "f8c7da672f5dba36b6f870608820b6b598cfae91296929f1b8f21ef2f1e8a0dd",
+        "size": 43578373
+      },
+      "sha256VerifiedBeforeExtraction": true,
+      "installed": false
+    },
+    {
+      "major": 16,
+      "version": "16.0.2+7",
+      "openjdkVersion": "16.0.2+7",
+      "architecture": "x64",
+      "os": "windows",
+      "imageType": "jdk",
+      "apiUrl": "https://api.adoptium.net/v3/assets/latest/16/hotspot?architecture=x64&image_type=jdk&os=windows&vendor=eclipse",
+      "releaseName": "jdk-16.0.2+7",
+      "archive": {
+        "name": "OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip",
+        "url": "https://github.com/adoptium/temurin16-binaries/releases/download/jdk-16.0.2%2B7/OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip",
+        "sha256": "40191ffbafd8a6f9559352d8de31e8d22a56822fb41bbcf45f34e3fd3afa5f9e",
+        "size": 203448494
+      },
+      "sha256VerifiedBeforeExtraction": true,
+      "installed": false
+    }
+  ],
+  "parameterSources": [
+    "https://www.oracle.com/java/technologies/javase/11-relnote-issues.html",
+    "https://docs.oracle.com/en/java/javase/11/migrate/migration-guide.pdf",
+    "https://docs.oracle.com/en/java/javase/16/docs/specs/man/java.html"
+  ],
+  "notes": [
+    "Java16 has reached end of maintenance. Its historical patch is used only to verify JVM option compatibility, not recommended for deployment.",
+    "Temurin16 API had no Windows x64 JRE asset; the official archived JDK ZIP was used without installation.",
+    "PermSize is explicitly ignored/obsolete in both tested runtimes; obsolete acceptance is distinguished from active options and genuine parser rejection."
+  ]
+}

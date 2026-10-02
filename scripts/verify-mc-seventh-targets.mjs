@@ -5,6 +5,7 @@ import { mount } from "./mc-interaction-runtime.mjs";
 import { MODERN_TARGET_FIXTURES, TARGET_NATIVE_ORACLE, modernTargetNativeFixtures } from "./mc-target-fixtures.mjs";
 
 const { isCommandTarget, targetErrorHint } = loadTs("../src/lib/mc/target.ts");
+const { compoundNbt } = loadTs("../src/lib/mc/targetNbt.ts");
 const { importGiveForRecipe } = loadTs("../src/lib/mc/give-recipe.ts");
 const modern = ["26.1", "1.21.8", "1.21.5", "1.20.6", "1.20.4", "1.17", "1.16.5"];
 const legacy = ["1.12.2", "1.8.9"];
@@ -46,6 +47,16 @@ for (const version of [...modern, ...legacy]) {
   }
 }
 
+// Independently reproduced in checksum-pinned 1.16.5 and 26.1 TagParser:
+// quoted empty keys are invalid, while a nonempty key with an empty value is valid.
+for (const version of modern) for (const [snbt, accepted] of [
+  ['{"":1}', false], ["{'':1}", false], ['{outer:{"":1}}', false],
+  ['{key:""}', true], ["{'key':''}", true],
+]) {
+  checked("versionSyntax", () => assert.equal(compoundNbt(snbt, version), accepted, `${version} ${snbt}`));
+  checked("versionSyntax", () => assert.equal(isCommandTarget(`@p[nbt=${snbt}]`, version, { playersOnly: true }), accepted, `${version} selector ${snbt}`));
+}
+
 const targets = [
   ["@p[distance=..10]", true],
   ['@a[name="Alex, Jr"]', true],
@@ -54,6 +65,8 @@ const targets = [
   ["@e[level=1..5]", true],
   ["@e[advancements={minecraft:story/root=true}]", true],
   ["@p[nbt={Foo:{List:[{a:1b},{a:2b}]}}]", true],
+  ['@p[nbt={"":1}]', false],
+  ["@p[nbt={'':1}]", false],
   ["@p[type=player]", false],
   ["@e[type=player,type=!zombie]", false],
   ["@a[name=Alex,name=!Bob]", false],

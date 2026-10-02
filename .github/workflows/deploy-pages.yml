@@ -50,8 +50,34 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
+          java-version: '8'
+      - run: pnpm check:launch:java8
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - run: pnpm check:launch:java11 --java-home "$JAVA_HOME"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '16'
+      - run: pnpm check:launch:java16 --java-home "$JAVA_HOME"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: pnpm check:launch:java17 --java-home "$JAVA_HOME"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: pnpm check:launch:java21 --java-home "$JAVA_HOME"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
           java-version: '25'
       - run: pnpm check:native
+      - run: pnpm check:native:legacy
       - run: pnpm check:launch:native
       - run: touch out/.nojekyll
       - uses: actions/configure-pages@v5

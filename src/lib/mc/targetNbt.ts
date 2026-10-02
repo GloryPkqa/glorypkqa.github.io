@@ -142,7 +142,9 @@ export function compoundNbt(source: string, version: string) {
       if (open === "{") {
         const isQuoted = source[index] === '"' || source[index] === "'";
         const key = isQuoted ? quoted() : token();
-        if (key === null || (key === "" && (expanded || !isQuoted))) return null;
+        // Both legacy TagParser and modern SNBT reject empty compound keys,
+        // even when the key is quoted. Empty string values remain valid.
+        if (key === null || key === "") return null;
         space(); if (source[index++] !== ":") return null;
       }
       const item = value(depth + 1, expanded ? typed : undefined); if (!item) return null;

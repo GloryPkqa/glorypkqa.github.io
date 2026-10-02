@@ -33,7 +33,9 @@ export default function VersionFeed() {
       if (pending.current === controller && !controller.signal.aborted) { setManifest(data); setUpdated(new Date()); }
     } catch (caught) {
       if (pending.current !== controller) return;
-      setError(timedOut ? "版本目录查询超时，请稍后刷新重试。" : caught instanceof Error ? caught.message : "版本目录暂时无法获取。");
+      const isTimeout = timedOut || caught instanceof Error && caught.name === "AbortError";
+      const knownMessage = caught instanceof Error && ["版本目录暂时无法获取。", "版本目录格式无法识别。"].includes(caught.message) ? caught.message : "版本目录暂时无法获取，请稍后刷新重试。";
+      setError(isTimeout ? "版本目录查询超时，请稍后刷新重试。" : knownMessage);
     } finally {
       window.clearTimeout(timeout);
       if (pending.current === controller) { pending.current = null; setLoading(false); }

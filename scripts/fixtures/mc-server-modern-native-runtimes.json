@@ -1,0 +1,30 @@
+{
+  "verifiedAt": "2026-10-03",
+  "distribution": "Eclipse Temurin Windows x64 HotSpot JDK",
+  "method": "Archives downloaded from official Adoptium API release links, SHA256-verified, and extracted only inside ignored coverage/java21 and coverage/java17. No system install or configuration changes; native probes run -version only.",
+  "runtimes": [
+    {
+      "major": 21,
+      "apiVersion": "21.0.12+101.0.LTS",
+      "metadataSource": "https://api.adoptium.net/v3/assets/latest/21/hotspot?architecture=x64&image_type=jdk&os=windows&vendor=eclipse",
+      "archive": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jdk_x64_windows_hotspot_21.0.12.1_1.zip",
+      "sizeBytes": 205073461,
+      "sha256": "f9d6e191ab098c0d416e7d588a24420a8621cd2f4720dab2459b8b7b2d2d8b4e"
+    },
+    {
+      "major": 17,
+      "apiVersion": "17.0.20+101",
+      "metadataSource": "https://api.adoptium.net/v3/assets/latest/17/hotspot?architecture=x64&image_type=jdk&os=windows&vendor=eclipse",
+      "archive": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_x64_windows_hotspot_17.0.20.1_1.zip",
+      "sizeBytes": 190817615,
+      "sha256": "e53a79c3c3d86865bd7e787903884331068e71321714ffd44f145785affc7cb0"
+    }
+  ],
+  "sources": [
+    "https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html",
+    "https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html",
+    "https://openjdk.org/jeps/439",
+    "https://docs.oracle.com/en/java/javase/21/gctuning/available-collectors.html"
+  ],
+  "limitation": "One maintained update per JVM major was executed. This does not certify all historical updates, platforms, server cores or workload capacity."
+}

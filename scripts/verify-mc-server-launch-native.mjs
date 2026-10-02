@@ -4,6 +4,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadTs } from "./mc-test-runtime.mjs";
+import { jvmProbePassed } from "./mc-jvm-probe-result.mjs";
+import { verifyJvmProbeClassifier } from "./verify-mc-jvm-probe-result.mjs";
 
 // Every process in this audit ends with -version. No JAR, game main class,
 // EULA, world creation, network listener or server lifecycle is executed.
@@ -21,19 +23,20 @@ const probeDirectory = join(root, "coverage", "server-launch-native-tmp");
 mkdirSync(probeDirectory, { recursive: true });
 const records = [];
 const counts = { runtimeMetadata: 0, controls: 0, flagDefaults: 0, flagBounds: 0, collectorProfiles: 0 };
+const classifierChecks = verifyJvmProbeClassifier();
 function probe(id, args, expect = "accept", category = "controls") {
   assert.ok(!args.includes("-jar") && args.at(-1) === "-version", `${id}: only a version probe may be executed`);
   const result = spawnSync(java, args, { cwd: probeDirectory, env, windowsHide: true, timeout: 15000, encoding: "utf8", maxBuffer: 1024 * 1024 });
   if (result.error) throw new Error(`${id}: Java probe could not run: ${result.error.message}`);
   const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
-  const pass = expect === "reject" ? result.status !== 0 : expect === "obsolete" ? result.status === 0 && /ignoring option|obsolete|support was removed/i.test(output) : result.status === 0 && !/ignoring option|unrecognized vm option|support was removed/i.test(output);
-  records.push({ id, args, expect, exitCode: result.status, pass, output });
+  const pass = jvmProbePassed(result, expect);
+  records.push({ id, args, expect, exitCode: result.status, signal: result.signal, pass, output });
   counts[category]++;
   return output;
 }
 
 const runtime = probe("runtime-java25", ["-Xms32m", "-Xmx64m", "-version"]);
-assert.match(runtime, /(?:version|openjdk) "25\./, "Native launch audit requires JDK 25; pass --java / --java-home or JAVA_HOME");
+assert.match(runtime, /(?:version|openjdk) "25(?:\.|"|\+)/, "Native launch audit requires JDK 25; pass --java / --java-home or JAVA_HOME");
 const fixture = JSON.parse(readFileSync(new URL("./fixtures/mc-server-java-runtime.json", import.meta.url), "utf8"));
 const { makeServerLaunch, recommendedJavaForVersion, SERVER_GC_OPTIONS, SERVER_JVM_FLAGS: SERVER_FLAGS } = loadTs("../src/lib/mc/server-launch.ts");
 for (const row of fixture.versions) {
@@ -129,7 +132,7 @@ for (const option of SERVER_GC_OPTIONS) {
   probe(`collector-${collector}-all-compatible`, jvmArgs(input, collector, { combined: true }), "accept", "collectorProfiles");
 }
 
-const report = { java, runtime: runtime.trim(), counts, probes: records.length, failures: records.filter((row) => !row.pass), records, limitations: ["Runtime execution covers installed HotSpot JDK 25 only; Java 8/16/17/21 boundaries use primary documentation and product regression tests.", "No server or plugin was executed; successful -version validates JVM argument acceptance, not workload performance.", "Aggregated profiles clamp heap/SoftMaxHeapSize to 32/64 MiB to avoid expensive pretouch allocations.", "Individual ActiveProcessorCount probes preserve the tested CPU value but explicitly limit G1 workers to 4 parallel / 1 concurrent; this avoids a host-resource stress test and is independently confirmed with PrintFlagsFinal."] };
+const report = { java, platform: process.platform, architecture: process.arch, classifierChecks, runtime: runtime.trim(), counts, probes: records.length, failures: records.filter((row) => !row.pass), records, limitations: ["This runner executes the selected HotSpot JDK 25 only; Java 8/17/21 have separate native runners, while Java 16 remains documentation and product regression coverage.", "No server or plugin was executed; successful -version validates JVM argument acceptance, not workload performance.", "Aggregated profiles clamp heap/SoftMaxHeapSize to 32/64 MiB to avoid expensive pretouch allocations.", "Individual ActiveProcessorCount probes preserve the tested CPU value but explicitly limit G1 workers to 4 parallel / 1 concurrent; this avoids a host-resource stress test and is independently confirmed with PrintFlagsFinal."] };
 mkdirSync(join(root, "coverage"), { recursive: true });
 writeFileSync(join(root, "coverage", "server-launch-native-result.json"), `${JSON.stringify(report, null, 2)}\n`);
 if (report.failures.length) {

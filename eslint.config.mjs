@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    // Offline audit downloads and generated fixtures are not project source.
+    "coverage/**",
     "next-env.d.ts",
   ]),
 ]);

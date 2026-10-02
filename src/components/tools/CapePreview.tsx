@@ -13,33 +13,47 @@ export default function CapePreview({ skinUrl, capeUrl, playerName }: { skinUrl:
 
   useEffect(() => {
     let disposed = false;
+    let started = false;
     let viewer: import("skinview3d").SkinViewer | undefined;
     let resizeObserver: ResizeObserver | undefined;
+    let intersectionObserver: IntersectionObserver | undefined;
     const release = () => {
+      intersectionObserver?.disconnect(); intersectionObserver = undefined;
       resizeObserver?.disconnect(); resizeObserver = undefined;
       viewer?.dispose(); viewer = undefined;
     };
-    void (async () => {
-      try {
-        const { SkinViewer } = await import("skinview3d");
-        if (disposed || !canvas.current || !frame.current) return;
-        viewer = new SkinViewer({ canvas: canvas.current, width: frame.current.clientWidth, height: frame.current.clientHeight, renderPaused: true });
-        viewer.playerObject.rotation.y = Math.PI;
-        viewer.zoom = 0.85;
-        resizeObserver = new ResizeObserver(() => {
-          if (!viewer || !frame.current) return;
-          viewer.width = frame.current.clientWidth;
-          viewer.height = frame.current.clientHeight;
-          viewer.render();
-        });
-        resizeObserver.observe(frame.current);
-        await Promise.all([viewer.loadSkin(skinUrl), viewer.loadCape(capeUrl)]);
-        if (!disposed) { viewer.render(); setFailedResource(""); setFailedFallbackResource(""); }
-      } catch {
-        release();
-        if (!disposed) { setFailedResource(resource); setFailedFallbackResource(""); }
-      }
-    })();
+    const start = () => {
+      if (disposed || started) return;
+      started = true;
+      intersectionObserver?.disconnect(); intersectionObserver = undefined;
+      void (async () => {
+        try {
+          const { SkinViewer } = await import("skinview3d");
+          if (disposed || !canvas.current || !frame.current) return;
+          viewer = new SkinViewer({ canvas: canvas.current, width: frame.current.clientWidth, height: frame.current.clientHeight, renderPaused: true });
+          viewer.playerObject.rotation.y = Math.PI;
+          viewer.zoom = 0.85;
+          resizeObserver = new ResizeObserver(() => {
+            if (!viewer || !frame.current) return;
+            viewer.width = frame.current.clientWidth;
+            viewer.height = frame.current.clientHeight;
+            viewer.render();
+          });
+          resizeObserver.observe(frame.current);
+          await Promise.all([viewer.loadSkin(skinUrl), viewer.loadCape(capeUrl)]);
+          if (!disposed) { viewer.render(); setFailedResource(""); setFailedFallbackResource(""); }
+        } catch {
+          release();
+          if (!disposed) { setFailedResource(resource); setFailedFallbackResource(""); }
+        }
+      })();
+    };
+    if (typeof IntersectionObserver === "function" && frame.current) {
+      intersectionObserver = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) start();
+      }, { rootMargin: "160px" });
+      intersectionObserver.observe(frame.current);
+    } else start();
     return () => { disposed = true; release(); };
   }, [skinUrl, capeUrl, resource]);
 
