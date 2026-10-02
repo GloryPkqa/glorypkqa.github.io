@@ -3,6 +3,7 @@
 import { useState } from "react";
 import useCopyFeedback from "@/lib/useCopyFeedback";
 import { versionAtLeast, type McCatalog } from "@/lib/mc/give";
+import { isBlockInteger, isWorldHorizontalPosition } from "@/lib/mc/position";
 
 type Point = [string, string, string];
 type FillMode = "replace" | "keep" | "destroy" | "hollow" | "outline";
@@ -18,7 +19,7 @@ const FILL_MODES: { value: FillMode; label: string }[] = [
 
 function parsedPoint(point: Point) {
   const values = point.map((value) => Number(value));
-  return point.every((value) => /^-?\d+$/.test(value.trim())) && values.every(Number.isSafeInteger)
+  return point.every((value) => /^-?\d+$/.test(value.trim())) && values.every(isBlockInteger) && isWorldHorizontalPosition(values)
     ? values as number[]
     : null;
 }
@@ -46,7 +47,7 @@ export default function BlockTool({ version, catalog }: { version: string; catal
   const setCommand = matchingBlock && from
     ? `/setblock ${from.join(" ")} minecraft:${blockId}${legacy ? ` 0 ${setMode}` : setMode === "replace" ? "" : ` ${setMode}`}`
     : "";
-  const fillCommand = matchingBlock && from && to && volume && Number.isSafeInteger(volume)
+  const fillCommand = matchingBlock && from && to && volume && Number.isSafeInteger(volume) && (versionAtLeast(version, "1.19.4") || volume <= 32768)
     ? `/fill ${from.join(" ")} ${to.join(" ")} minecraft:${blockId}${legacy ? ` 0 ${fillMode}` : fillMode === "replace" ? "" : ` ${fillMode}`}`
     : "";
 
@@ -60,9 +61,9 @@ export default function BlockTool({ version, catalog }: { version: string; catal
       <PointFields label="终点" point={end} onChange={setEnd} />
       <div className="mc-form-section-label"><span>04</span> 放置方式</div>
       <div className="mc-field-grid"><label className="mc-field"><span>单个方块 /setblock</span><select className="mc-select" value={setMode} onChange={(event) => setSetMode(event.target.value)}><option value="replace">替换</option><option value="keep">仅空位放置</option><option value="destroy">破坏后放置</option></select></label><label className="mc-field"><span>区域填充 /fill</span><select className="mc-select" value={fillMode} onChange={(event) => setFillMode(event.target.value as FillMode)}>{FILL_MODES.map((mode) => <option key={mode.value} value={mode.value}>{mode.label}</option>)}</select></label></div>
-      <p className="mc-field-hint">起点用于 /setblock；/fill 使用起点与终点，两个角可以按任意方向填写。这里生成方块的默认状态；朝向、水浸等方块状态暂未加入。</p>
+      <p className="mc-field-hint">起点用于 /setblock；/fill 使用起点与终点，两个角可以按任意方向填写。X、Z ≥ −30,000,000 且 &lt; 30,000,000；Y 还需位于所在维度的建造高度内，区域需已加载。这里生成方块的默认状态；朝向、水浸等方块状态暂未加入。</p>
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> BUILD PREVIEW</span><span>JAVA · {version}</span></div><div className="mc-block-display"><span aria-hidden="true">▣</span><strong>{matchingBlock?.displayName ?? "选择方块"}</strong><small>{matchingBlock ? `minecraft:${matchingBlock.name}` : "minecraft:..."}</small><div>区域体积 <b>{volume !== null && Number.isSafeInteger(volume) ? volume.toLocaleString("zh-CN") : "—"}</b> 格</div></div>
-      {!from && <p className="mc-output-warning">起点的 X、Y、Z 都需要填写整数。</p>}{!to && <p className="mc-output-warning">终点的 X、Y、Z 都需要填写整数。</p>}{volume !== null && volume > 32768 && <p className="mc-output-warning">⚠ 区域超过 32,768 方块默认上限。{limitHint}</p>}
+      {!from && <p className="mc-output-warning">起点需填写整数：X、Z ≥ −30,000,000 且 &lt; 30,000,000；Y 为 −2,147,483,648 至 2,147,483,647。</p>}{!to && <p className="mc-output-warning">终点需填写整数：X、Z ≥ −30,000,000 且 &lt; 30,000,000；Y 为 −2,147,483,648 至 2,147,483,647。</p>}{volume !== null && volume > 32768 && <p className="mc-output-warning">⚠ 区域超过 32,768 方块默认上限。{limitHint}</p>}
       {[{ key: "set", name: "放置单个方块", command: setCommand }, { key: "fill", name: "填充区域", command: fillCommand }].map((entry) => <div className="mc-color-result" key={entry.key}><div className="mc-code-heading"><span>{entry.name}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.command || "// 选择方块并填写有效坐标"}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.command} onClick={() => copy(entry.command)}>{isCopied(entry.command) ? "已复制 ✓" : "复制指令 ↗"}</button></div>)}
       <p className="mc-output-note">指令需要相应权限。区域填充会改变世界，请在游戏内检查坐标与方块后执行。</p>
     </aside></div>

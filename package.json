@@ -13,6 +13,8 @@
     "check:audit": "node scripts/verify-mc-audit.mjs && node scripts/verify-mc-interactions.mjs",
     "check:deep": "node scripts/verify-mc-deep.mjs",
     "check:third": "node scripts/verify-mc-third-pass.mjs",
+    "check:fourth": "node scripts/verify-mc-fourth-pass.mjs",
+    "check:native": "node scripts/verify-mc-native.mjs",
     "start": "next start",
     "lint": "eslint"
   },

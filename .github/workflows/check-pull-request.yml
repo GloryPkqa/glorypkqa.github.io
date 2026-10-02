@@ -29,3 +29,9 @@ jobs:
       - run: pnpm check:audit
       - run: pnpm check:deep
       - run: pnpm check:third
+      - run: pnpm check:fourth
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - run: pnpm check:native

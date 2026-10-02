@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import useCopyFeedback from "@/lib/useCopyFeedback";
-import type { McCatalog } from "@/lib/mc/give";
+import { versionAtLeast, type McCatalog } from "@/lib/mc/give";
+import { isSpawnablePosition } from "@/lib/mc/position";
 
 type Point = [string, string, string];
 
@@ -16,7 +17,7 @@ export default function SummonTool({ version, catalog }: { version: string; cata
   const matching = catalog?.entities?.find((entry) => entry.name === entityId);
   const eggId = `${entityId}_spawn_egg`;
   const hasEgg = !!catalog?.items.some((entry) => entry.name === eggId);
-  const positionValid = positionMode === "here" || point.every((value) => /^-?\d+$/.test(value.trim()) && Number.isSafeInteger(Number(value)));
+  const positionValid = positionMode === "here" || (point.every((value) => /^-?\d+$/.test(value.trim())) && isSpawnablePosition(point.map(Number), version));
   const position = positionMode === "here" ? "~ ~ ~" : point.join(" ");
   const summon = matching && positionValid ? `/summon minecraft:${entityId} ${position}` : "";
   const egg = matching && hasEgg ? `/give @p minecraft:${eggId} 1` : "";
@@ -33,7 +34,7 @@ export default function SummonTool({ version, catalog }: { version: string; cata
       <p className="mc-field-hint">当前位置使用相对坐标，执行指令的玩家或命令方块是坐标基准。指定坐标时请输入整数。刷怪蛋仅对当前物品目录中存在对应物品的实体开放。</p>
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> SUMMON OUTPUT</span><span>JAVA · {version}</span></div>
       <div className="mc-effect-display"><span aria-hidden="true">♞</span><strong>{matching?.displayName ?? "选择实体"}</strong><small>{matching ? `minecraft:${matching.name}` : "minecraft:..."}</small></div>
-      {!positionValid && <p className="mc-output-warning">X、Y、Z 都需要填写有效整数。</p>}
+      {!positionValid && <p className="mc-output-warning">请输入整数：X、Z ≥ −30,000,000 且 &lt; 30,000,000；Y {versionAtLeast(version, "1.13") ? "≥ −20,000,000 且 < 20,000,000" : "为 −2,147,483,648 至 2,147,483,647"}。</p>}
       {[{ id: "summon", label: "召唤实体", value: summon }, { id: "egg", label: "获取刷怪蛋", value: egg }].map((entry) => <div className="mc-color-result" key={entry.id}><div className="mc-code-heading"><span>{entry.label}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.value || (entry.id === "egg" && matching ? "// 此实体没有对应刷怪蛋" : "// 选择实体并填写有效坐标")}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.value} onClick={() => copy(entry.value)}>{isCopied(entry.value) ? "已复制 ✓" : "复制指令 ↗"}</button></div>)}
       <p className="mc-output-note">目录来自构建时的版本数据。个别实体可能受世界环境、难度或服务器规则限制；请在对应游戏版本中验证。</p>
     </aside></div>
