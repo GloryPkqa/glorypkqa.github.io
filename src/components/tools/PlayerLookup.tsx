@@ -30,8 +30,10 @@ export default function PlayerLookup() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const pending = useRef<AbortController | null>(null);
+  const autoStart = useRef<number | null>(null);
 
   const lookupPlayer = useCallback(async (input: string) => {
+    if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; }
     const previous = pending.current;
     pending.current = null;
     previous?.abort();
@@ -48,7 +50,8 @@ export default function PlayerLookup() {
       if (response.status === 429) throw new Error("查询太频繁，请稍后重试。");
       if (!response.ok) throw new Error("玩家不存在，或接口暂时不可用。");
       const data = await response.json() as PlayerResponse;
-      if (!data.data?.player?.id || !data.data.player.username) throw new Error("没有查到这个玩家。");
+      if (typeof data.data?.player?.id !== "string" || !data.data.player.id || typeof data.data.player.username !== "string" || !data.data.player.username) throw new Error("没有查到这个玩家。");
+      if (data.data.player.properties !== undefined && (!Array.isArray(data.data.player.properties) || data.data.player.properties.some((entry) => !entry || typeof entry.name !== "string" || typeof entry.value !== "string"))) throw new Error("玩家接口返回的数据不完整，请稍后重试。");
       if (pending.current === controller && !controller.signal.aborted) setPlayer(data.data.player);
     } catch (caught) {
       if (pending.current === controller) setError(caught instanceof Error && caught.name === "AbortError" ? "查询超时，请稍后重试。" : caught instanceof Error ? caught.message : "查询失败，请稍后重试。");
@@ -60,11 +63,13 @@ export default function PlayerLookup() {
 
   useEffect(() => {
     const start = window.setTimeout(() => { void lookupPlayer("Pkqa"); }, 0);
+    autoStart.current = start;
     return () => { window.clearTimeout(start); const previous = pending.current; pending.current = null; previous?.abort(); };
   }, [lookupPlayer]);
 
   function lookup(event: React.FormEvent) { event.preventDefault(); void lookupPlayer(query.trim()); }
   function changeQuery(value: string) {
+    if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; }
     // A changed name is a new search draft; an older response must not replace it.
     const previous = pending.current;
     pending.current = null;

@@ -17,6 +17,7 @@ import SummonTool from "@/components/tools/SummonTool";
 import BannerTool from "@/components/tools/BannerTool";
 import ProcessingRecipeTool from "@/components/tools/ProcessingRecipeTool";
 import DataPackTool from "@/components/tools/DataPackTool";
+import { isMcCatalog } from "@/lib/mc/catalog";
 import {
   MC_VERSIONS,
   enchantmentWarnings,
@@ -94,7 +95,7 @@ function QuickReturn() {
   </nav>;
 }
 
-function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | null }) {
+export function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | null }) {
   const [item, setItem] = useState("diamond_sword");
   const [itemPickerOpen, setItemPickerOpen] = useState(false);
   const [itemSearch, setItemSearch] = useState("");
@@ -117,6 +118,7 @@ function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | 
   const targetValid = /^(@[aprs](\[[^\]]*\])?|[A-Za-z0-9_]{3,16})$/.test(normalizedTarget);
   const selectedForVersion = selected.filter((entry) => catalog?.enchantments.some((option) => option.name === entry.name));
   const availableEnchantments = catalog?.enchantments.filter((entry) => !selected.some((chosen) => chosen.name === entry.name)) ?? [];
+  const pendingEnchantment = availableEnchantments.some((entry) => entry.name === enchantToAdd) ? enchantToAdd : "";
   const warnings = enchantmentWarnings(selectedForVersion, catalog);
 
   const command = matchingItem && targetValid
@@ -133,8 +135,8 @@ function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | 
     : "";
 
   function addEnchantment() {
-    if (!enchantToAdd || selected.some((entry) => entry.name === enchantToAdd)) return;
-    setSelected((previous) => [...previous, { name: enchantToAdd, level: 1 }]);
+    if (!pendingEnchantment) return;
+    setSelected((previous) => [...previous, { name: pendingEnchantment, level: 1 }]);
     setEnchantToAdd("");
   }
 
@@ -167,7 +169,7 @@ function GiveTool({ version, catalog }: { version: string; catalog: McCatalog | 
           <label className="mc-check"><input type="checkbox" checked={unbreakable} onChange={(event) => setUnbreakable(event.target.checked)} /><span className="mc-check-box" aria-hidden="true" /> 不可破坏 <small>UNBREAKABLE</small></label>
 
           <div className="mc-form-section-label"><span>03</span> 附魔配置</div>
-          <div className="mc-add-enchant"><select value={enchantToAdd} onChange={(event) => setEnchantToAdd(event.target.value)} aria-label="选择附魔"><option value="">选择要添加的附魔…</option>{availableEnchantments.map((entry) => <option key={entry.name} value={entry.name}>{entry.displayNameZh} · {entry.displayName}</option>)}</select><button type="button" onClick={addEnchantment} disabled={!enchantToAdd}>添加 ＋</button></div>
+          <div className="mc-add-enchant"><select value={pendingEnchantment} onChange={(event) => setEnchantToAdd(event.target.value)} aria-label="选择附魔"><option value="">选择要添加的附魔…</option>{availableEnchantments.map((entry) => <option key={entry.name} value={entry.name}>{entry.displayNameZh} · {entry.displayName}</option>)}</select><button type="button" onClick={addEnchantment} disabled={!pendingEnchantment}>添加 ＋</button></div>
           {selectedForVersion.length ? <div className="mc-enchant-list">{selectedForVersion.map((entry) => {
             const details = catalog?.enchantments.find((option) => option.name === entry.name);
             return <div className="mc-enchant-row" key={entry.name}><span><strong>{details?.displayNameZh ?? entry.name} <small>{details?.displayName}</small></strong><small>{entry.name} · 原版最高 {details?.maxLevel ?? "?"}</small></span><label>等级 <input type="number" min="1" max="255" value={entry.level} onChange={(event) => setSelected((previous) => previous.map((chosen) => chosen.name === entry.name ? { ...chosen, level: Math.max(1, Math.min(255, Math.floor(Number(event.target.value) || 1))) } : chosen))} /></label><button type="button" className="mc-remove" aria-label={`移除 ${entry.name}`} onClick={() => setSelected((previous) => previous.filter((chosen) => chosen.name !== entry.name))}>×</button></div>;
@@ -193,15 +195,23 @@ export default function McWorkbench() {
   const [version, setVersion] = useState<string>(MC_VERSIONS[0]);
   const [catalog, setCatalog] = useState<McCatalog | null>(null);
   const [dataError, setDataError] = useState("");
+  const [dataAttempt, setDataAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
-    fetch(`/mc-data/${version}.json`)
-      .then((response) => { if (!response.ok) throw new Error("版本数据无法加载"); return response.json() as Promise<McCatalog>; })
-      .then((data) => { if (active) setCatalog(data); })
-      .catch(() => { if (active) setDataError("版本数据暂时无法加载，请刷新后再试。"); });
-    return () => { active = false; };
-  }, [version]);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
+    fetch(`/mc-data/${version}.json`, { signal: controller.signal })
+      .then((response) => { if (!response.ok) throw new Error("版本数据无法加载"); return response.json() as Promise<unknown>; })
+      .then((data) => {
+        if (!active || controller.signal.aborted) return;
+        if (!isMcCatalog(data, version)) throw new Error("版本数据不完整或不匹配");
+        setCatalog(data);
+      })
+      .catch(() => { if (active) setDataError(controller.signal.aborted ? "版本数据加载超时，请重试。" : "版本数据暂时无法加载，请重试。"); })
+      .finally(() => window.clearTimeout(timeout));
+    return () => { active = false; window.clearTimeout(timeout); controller.abort(); };
+  }, [version, dataAttempt]);
 
   const itemCount = useMemo(() => catalog?.items.length.toLocaleString("zh-CN") ?? "—", [catalog]);
   const visibleItems = CATEGORY_ITEMS.filter((entry) => !("minVersion" in entry) || versionAtLeast(version, entry.minVersion!));
@@ -216,6 +226,7 @@ export default function McWorkbench() {
       <section className="mc-directory" aria-labelledby="mc-directory-heading"><div className="mc-directory-heading"><div><span className="mc-overline">EXPLORE THE WORKSHOP</span><h2 id="mc-directory-heading">从这里<span>开始</span></h2></div><label className="mc-version-switch"><span>游戏版本 <small>VERSION</small></span><select value={version} onChange={(event) => { if (event.target.value === version) return; setVersion(event.target.value); setCatalog(null); setDataError(""); }}>{MC_VERSIONS.map((entry) => <option key={entry} value={entry}>Java {entry}</option>)}</select></label></div><div className="mc-directory-grid">{visibleItems.map((entry) => <a className="mc-directory-card is-available" href={entry.href} key={entry.number}><span className="mc-directory-number">{entry.number} / {String(CATEGORY_ITEMS.length).padStart(2, "0")}</span><span className="mc-directory-icon" aria-hidden="true">{({ "01": "⚒", "02": "✦", "03": "⌖", "04": "◈", "05": "♙", "06": "✳", "07": "✚", "08": "◇", "09": "▣", "10": "⊞", "11": "☀", "12": "♞", "13": "⚑", "14": "♨", "15": "▤" } as Record<string, string>)[entry.number]}</span><strong>{entry.name}</strong><small>{entry.detail}</small><span className="mc-directory-arrow">↗</span></a>)}</div><div className="mc-data-note"><span className="mc-data-indicator" /> {dataError || (catalog ? `已载入 Java ${version} 数据 · ${itemCount} 种物品 · ${catalog.enchantments.length} 种附魔${catalog.blocks ? ` · ${catalog.blocks.length} 种方块` : ""}` : "正在读取版本数据…")}{!versionAtLeast(version, "1.16") && <span> · 旧版物品元数据与配方格式不同，相关生成器已隐藏。</span>}</div></section>
 
       {catalog && catalog.sourceVersion !== version && <p className="mc-version-source-note">Java {version} 的目录使用 minecraft-data 收录的 {catalog.sourceVersion} 数据；请在目标客户端核对最终指令。</p>}
+      {dataError && <button type="button" className="mc-recipe-more" onClick={() => { setDataError(""); setDataAttempt((attempt) => attempt + 1); }}>重新载入版本数据 ↻</button>}
       {versionAtLeast(version, "1.16") && <GiveTool version={version} catalog={catalog} />}
       <ColorTool version={version} />
       <CoordinateTool version={version} />

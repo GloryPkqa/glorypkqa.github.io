@@ -9,7 +9,8 @@ async function loadManifest(signal?: AbortSignal): Promise<Manifest> {
   const response = await fetch("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json", { signal });
   if (!response.ok) throw new Error("版本目录暂时无法获取。");
   const data = await response.json() as Manifest;
-  if (!data.latest?.release || !Array.isArray(data.versions)) throw new Error("版本目录格式无法识别。");
+  if (!data || typeof data.latest?.release !== "string" || !data.latest.release || typeof data.latest.snapshot !== "string" || !Array.isArray(data.versions)
+    || data.versions.some((entry) => !entry || typeof entry.id !== "string" || typeof entry.type !== "string" || typeof entry.releaseTime !== "string" || !Number.isFinite(Date.parse(entry.releaseTime)))) throw new Error("版本目录格式无法识别。");
   return data;
 }
 

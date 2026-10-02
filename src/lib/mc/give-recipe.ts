@@ -1,4 +1,4 @@
-import { versionAtLeast } from "@/lib/mc/give";
+import { versionAtLeast, type McCatalog } from "@/lib/mc/give";
 
 export type ImportedGiveResult = { item: string; count: number; components: Record<string, unknown> };
 
@@ -94,13 +94,28 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function importGiveForRecipe(command: string, version: string): ImportedGiveResult {
+function validateLiteralText(value: unknown, depth = 0): void {
+  if (depth > 16) throw new Error("名称或描述的嵌套层数过多。");
+  if (!isObject(value) || typeof value.text !== "string") throw new Error("名称或描述需要有效的文字内容。");
+  const allowed = new Set(["text", "color", "bold", "italic", "underlined", "strikethrough", "obfuscated", "extra"]);
+  if (Object.keys(value).some((key) => !allowed.has(key))) throw new Error("暂不支持这类文本属性，请使用本站 /give 生成器中的名称和描述。");
+  const colors = /^(#[a-fA-F0-9]{6}|black|dark_blue|dark_green|dark_aqua|dark_red|dark_purple|gold|gray|dark_gray|blue|green|aqua|red|light_purple|yellow|white)$/;
+  if (value.color !== undefined && (typeof value.color !== "string" || !colors.test(value.color))) throw new Error("名称或描述中的颜色无效。");
+  if (["bold", "italic", "underlined", "strikethrough", "obfuscated"].some((key) => value[key] !== undefined && typeof value[key] !== "boolean")) throw new Error("名称或描述中的样式需为 true 或 false。");
+  if (value.extra !== undefined) {
+    if (!Array.isArray(value.extra)) throw new Error("名称或描述的 extra 需要是文本列表。");
+    value.extra.forEach((entry) => validateLiteralText(entry, depth + 1));
+  }
+}
+
+export function importGiveForRecipe(command: string, version: string, catalog?: McCatalog): ImportedGiveResult {
   if (!versionAtLeast(version, "1.20.5")) throw new Error(`${version} 的原版工作台配方不能直接生成带属性的物品；请选 1.20.6 或更新版本。`);
   const source = command.trim();
   if (source.length > 12_000) throw new Error("指令过长，请粘贴本站生成的 /give 指令。");
   const match = source.match(/^\/?give\s+\S+\s+((?:minecraft:)?[a-z0-9_]+)([\s\S]*)$/i);
   if (!match) throw new Error("请粘贴完整的 Java 版 /give 指令。");
   const item = match[1].replace(/^minecraft:/i, "").toLowerCase();
+  if (catalog && (catalog.version !== version || !catalog.items.some((entry) => entry.name === item))) throw new Error("这件物品不在当前版本的物品目录中，请检查 /give 的版本。");
   let tail = match[2].trim();
   let rawComponents = "";
   if (tail.startsWith("{")) throw new Error("这条 /give 使用旧版 NBT；当前配方需要对应版本的物品组件指令。");
@@ -134,14 +149,19 @@ export function importGiveForRecipe(command: string, version: string): ImportedG
     if (key === "custom_name" || key === "lore") {
       const entries = key === "lore" ? value : [value];
       if (!Array.isArray(entries) || entries.some((entry) => version === "1.20.6" ? typeof entry !== "string" : !isObject(entry))) throw new Error("名称或描述的格式与所选版本不匹配。");
-      if (version === "1.20.6") for (const entry of entries) {
-        try { JSON.parse(entry as string); } catch { throw new Error("名称或描述中的 JSON 文本无效。"); }
+      for (const entry of entries) {
+        let text: unknown = entry;
+        if (version === "1.20.6") {
+          try { text = JSON.parse(entry as string); } catch { throw new Error("名称或描述中的 JSON 文本无效。"); }
+        }
+        validateLiteralText(text);
       }
     } else if (key === "enchantments" || key === "stored_enchantments") {
       if (!isObject(value)) throw new Error("附魔属性格式不正确。");
       const levels = version === "1.20.6" ? value.levels : value;
       if (!isObject(levels) || (version === "1.20.6" && Object.keys(value).some((field) => field !== "levels")) || (version !== "1.20.6" && "levels" in value)) throw new Error("附魔格式与所选版本不匹配，请在 /give 工具选择相同版本后重新复制。");
       if (Object.entries(levels).some(([id, level]) => !/^minecraft:[a-z0-9_]+$/.test(id) || !Number.isInteger(level) || (level as number) < 1 || (level as number) > 255)) throw new Error("附魔 ID 或等级无效。");
+      if (catalog && Object.keys(levels).some((id) => !catalog.enchantments.some((entry) => id === `minecraft:${entry.name}`))) throw new Error("附魔不属于当前版本，请在 /give 工具选择相同版本后重新复制。");
     } else if (!isObject(value) || Object.keys(value).length) throw new Error("无法破坏属性格式不正确；本站仅支持 unbreakable={}。");
     components[`minecraft:${key}`] = value;
   }

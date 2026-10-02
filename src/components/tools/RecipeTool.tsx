@@ -19,10 +19,10 @@ const SUBCATEGORY_NAMES: Record<string, string> = {
 };
 
 export function ItemIcon({ id, item, size = 36 }: { id: string; item?: McItem; size?: number }) {
-  const [failed, setFailed] = useState(false);
+  const [failedUrl, setFailedUrl] = useState("");
   const url = item?.icon ? `https://blockrender.dev/render/item/${encodeURIComponent(id)}.png?size=64` : item?.iconUrl;
-  if (!url || failed) return <span className="mc-recipe-icon-fallback" aria-hidden="true">{id.includes("chest") ? "▤" : id.includes("statue") ? "♟" : "▦"}</span>;
-  return <img src={url} width={size} height={size} loading="lazy" decoding="async" alt="" onError={() => setFailed(true)} />;
+  if (!url || failedUrl === url) return <span className="mc-recipe-icon-fallback" aria-hidden="true">{id.includes("chest") ? "▤" : id.includes("statue") ? "♟" : "▦"}</span>;
+  return <img src={url} width={size} height={size} loading="lazy" decoding="async" alt="" onError={() => setFailedUrl(url)} />;
 }
 
 export default function RecipeTool({ version, catalog }: { version: string; catalog: McCatalog | null }) {

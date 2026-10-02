@@ -6,7 +6,12 @@ export function defaultTextStyle(colorA = "#55FF55"): TextStyle {
   return { mode: "solid", colorA, colorB: "#55FFFF", overrides: {}, bold: false, italic: false };
 }
 
-export function characters(text: string) { return Array.from(text); }
+export function characters(text: string) {
+  // Keep combining marks, flags and joined emoji together when applying colors.
+  return typeof Intl.Segmenter === "function"
+    ? Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text), (entry) => entry.segment)
+    : Array.from(text);
+}
 
 function blend(first: string, last: string, ratio: number) {
   const color = [1, 3, 5].map((index) => {

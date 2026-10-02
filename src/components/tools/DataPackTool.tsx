@@ -35,8 +35,8 @@ export default function DataPackTool({ version, catalog }: { version: string; ca
 
   function applyGive(command: string) {
     try {
-      const parsed = importGiveForRecipe(command, version);
-      if (catalog?.version === version && !validItems.has(parsed.item)) throw new Error("这件物品不在当前版本的物品目录中，请检查 /give 的版本。");
+      if (!catalog || !catalogReady) throw new Error("请等待当前版本的物品目录载入后再导入。");
+      const parsed = importGiveForRecipe(command, version, catalog);
       setResult(parsed.item);
       setResultCount(parsed.count);
       setImported({ ...parsed, version });

@@ -37,6 +37,7 @@ jobs:
       - run: pnpm check:potion
       - run: pnpm check:player
       - run: pnpm check:audit
+      - run: pnpm check:deep
       - run: touch out/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

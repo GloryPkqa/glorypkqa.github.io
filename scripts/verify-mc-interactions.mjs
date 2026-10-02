@@ -1,38 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { loadTs } from "./mc-test-runtime.mjs";
+import { mount, flush, respond } from "./mc-interaction-runtime.mjs";
 
-function mount(path, initialProps = {}) {
-  const hooks = [], effects = [], requests = [], timers = new Map(); let cursor = 0, timerId = 0, props = initialProps;
-  const react = {
-    useState(initial) { const i = cursor++; if (!(i in hooks)) hooks[i] = typeof initial === "function" ? initial() : initial; return [hooks[i], (value) => { hooks[i] = typeof value === "function" ? value(hooks[i]) : value; }]; },
-    useRef(initial) { const i = cursor++; return hooks[i] ??= { current: initial }; },
-    useMemo(callback) { cursor++; return callback(); },
-    useCallback(callback) { const i = cursor++; return hooks[i] ??= callback; },
-    useEffect(effect) { const i = cursor++; if (!(i in hooks)) { hooks[i] = true; effects.push(effect); } },
-  };
-  globalThis.window = { setTimeout(callback, delay) { const id = ++timerId; timers.set(id, { callback, delay }); return id; }, clearTimeout(id) { timers.delete(id); } };
-  globalThis.fetch = (url, { signal } = {}) => new Promise((resolve, reject) => { requests.push({ url, signal, resolve, reject }); });
-  const imports = { react, "@/components/tools/TextStyleControls": { default: () => null }, "@/components/tools/RecipeTool": { ItemIcon: () => null, default: () => null } };
-  if (path === "McWorkbench") {
-    imports["next/link"] = { default: () => null };
-    imports["@/components/ThemeToggle"] = { default: () => null };
-    for (const name of ["ColorTool", "CoordinateTool", "ServerLookup", "PlayerLookup", "VersionFeed", "EffectTool", "TitleTool", "BlockTool", "WorldTool", "SummonTool", "BannerTool", "ProcessingRecipeTool", "DataPackTool"]) imports[`@/components/tools/${name}`] = { default: () => null };
-  }
-  const component = loadTs(`../src/components/tools/${path}.tsx`, imports).default;
-  const render = () => { cursor = 0; return component(props); };
-  function nodes(node) { if (Array.isArray(node)) return node.flatMap(nodes); return node?.props ? [node, ...nodes(node.props.children)] : []; }
-  function content(node) { if (Array.isArray(node)) return node.map(content).join(""); return node?.props ? content(node.props.children) : typeof node === "string" || typeof node === "number" ? String(node) : ""; }
-  const all = (type) => nodes(render()).filter((node) => node.type === type);
-  const button = (name) => all("button").find((node) => content(node).includes(name));
-  const edit = (node, value) => { assert.ok(node?.props.onChange); node.props.onChange({ target: { value, checked: value } }); };
-  const commands = () => all("code").map(content).filter((text) => /^\/[a-z]/.test(text));
-  const tick = (delay) => { for (const [id, timer] of [...timers]) if (timer.delay === delay) { timers.delete(id); timer.callback(); } };
-  render(); const cleanups = effects.map((effect) => effect());
-  return { all, nodes: () => nodes(render()), text: () => content(render()), button, edit, commands, requests, tick, submit: () => all("form")[0].props.onSubmit({ preventDefault() {} }), props: (value) => { props = value; }, unmount: () => cleanups.forEach((fn) => fn?.()) };
-}
-const flush = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
-const respond = (request, data, status = 200) => request.resolve({ ok: status === 200, status, json: async () => data });
 const give = loadTs("../src/lib/mc/give.ts");
 let cases = 0;
 const workbench = mount("McWorkbench");
