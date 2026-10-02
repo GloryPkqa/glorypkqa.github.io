@@ -33,8 +33,13 @@ jobs:
       - run: pnpm check:fifth
       - run: python3 scripts/verify-mc-fifth-zips.py
       - run: pnpm check:sixth
+      - run: pnpm check:seventh
+      - run: python3 scripts/verify-mc-seventh-items-zips.py
+      - run: pnpm check:launch
+      - run: pnpm check:sizing
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '25'
       - run: pnpm check:native
+      - run: pnpm check:launch:native

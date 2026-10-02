@@ -4,6 +4,7 @@ import { useState } from "react";
 import useCopyFeedback from "@/lib/useCopyFeedback";
 import TextStyleControls from "@/components/tools/TextStyleControls";
 import { coloredParts, defaultTextStyle, previewTextParts, remapTextColors, textComponent } from "@/lib/mc/textColors";
+import { versionAtLeast } from "@/lib/mc/give";
 
 const COLORS = [
   ["黑色", "0", "#000000"], ["深蓝", "1", "#0000AA"], ["深绿", "2", "#00AA00"], ["青色", "3", "#00AAAA"],
@@ -26,6 +27,7 @@ export default function ColorTool({ version }: { version: string }) {
     { title: "传统 § 颜色码", detail: "经典 16 色；不支持 RGB、渐变和逐字色", value: `§${colorCode}${modifiers ? `§${modifiers.split("").join("§")}` : ""}${cleanMessage}§r` },
     { title: "插件 & 颜色码", detail: "需要插件支持 & 代码；仅经典 16 色", value: `&${colorCode}${modifiers ? `&${modifiers.split("").join("&")}` : ""}${cleanMessage}&r` },
   ];
+  const longCommand = outputs[0].value.length > (versionAtLeast(version, "1.11") ? 256 : 100);
 
   return <section className="mc-section" id="colors" aria-labelledby="colors-heading">
     <div className="mc-section-header"><div><span className="mc-overline">02 / TEXT STUDIO</span><h2 id="colors-heading">文字与颜色<span>生成器</span></h2></div><span className="mc-section-mark" aria-hidden="true">✧</span></div>
@@ -39,7 +41,7 @@ export default function ColorTool({ version }: { version: string }) {
       <p className="mc-field-hint">RGB、渐变、AB 交替和逐字色会写进 /tellraw。传统 § 与插件 & 代码只保留上方经典调色盘选中的颜色。输入中的 § / & 格式码可能被游戏或插件再次解释。</p>
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> LIVE PREVIEW</span><span>JAVA · {version}</span></div>
       <div className="mc-chat-preview"><span className="mc-chat-label">MINECRAFT CHAT</span><div>{previewParts.length ? previewParts.map((part, index) => <span key={index} style={{ color: part.color, fontWeight: part.bold ? 800 : 400, fontStyle: part.italic ? "italic" : "normal" }}>{part.text}</span>) : <span>预览文字</span>}</div></div>
-      {outputs.map((output) => <div className="mc-color-result" key={output.title}><div className="mc-code-heading"><span>{output.title}</span><span>{output.detail}</span></div><pre className="mc-code-output"><code>{output.value}</code></pre><button className="mc-copy-button" type="button" onClick={() => copy(output.value)}>{copyLabel(output.value, "复制代码 ↗")}</button></div>)}
+      {longCommand && <p className="mc-output-note">较长指令建议放入命令方块执行；聊天框可能截断。{versionAtLeast(version, "1.12") && " 也可去掉开头 /，写入 .mcfunction 文件。"}</p>}{outputs.map((output) => <div className="mc-color-result" key={output.title}><div className="mc-code-heading"><span>{output.title}</span><span>{output.detail}</span></div><pre className="mc-code-output"><code>{output.value}</code></pre><button className="mc-copy-button" type="button" onClick={() => copy(output.value)}>{copyLabel(output.value, "复制代码 ↗")}</button></div>)}
     </aside></div>
   </section>;
 }

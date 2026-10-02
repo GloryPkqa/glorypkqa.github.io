@@ -1,4 +1,4 @@
-import { versionAtLeast } from "@/lib/mc/give";
+import { MAX_COMPONENT_LORE_LINES, versionAtLeast } from "@/lib/mc/give";
 
 export type LootEntry = { item: string; weight: number; count: number };
 export type PackInput = {
@@ -21,8 +21,8 @@ export function createDataPackFiles(input: PackInput) {
   if (!input.recipeEnabled && !input.lootEnabled) errors.push("请至少启用一种内容。");
   const recipeName = input.recipeName.trim();
   const lootName = input.lootName.trim();
-  if (input.recipeEnabled && !slug.test(recipeName)) errors.push("配方文件名无效。");
-  if (input.lootEnabled && !slug.test(lootName)) errors.push("战利品表文件名无效。");
+  if (input.recipeEnabled && (!slug.test(recipeName) || recipeName.length > 128)) errors.push("配方文件名需为 1–128 个小写字母、数字、下划线、点或连字符。");
+  if (input.lootEnabled && (!slug.test(lootName) || lootName.length > 128)) errors.push("战利品表文件名需为 1–128 个小写字母、数字、下划线、点或连字符。");
   const hasItem = (value: string) => input.validItems.has(itemId(value));
 
   const grid = input.grid.map(itemId);
@@ -31,6 +31,7 @@ export function createDataPackFiles(input: PackInput) {
     if (grid.length !== 9) errors.push("配方需要完整的九宫格材料。");
     if (!hasItem(input.result)) errors.push("配方产物不在当前版本的物品目录中。");
     if (input.resultComponents && Object.keys(input.resultComponents).length && !versionAtLeast(input.version, "1.20.5")) errors.push("当前版本的工作台配方不支持带属性的产物。");
+    if (Array.isArray(input.resultComponents?.["minecraft:lore"]) && input.resultComponents["minecraft:lore"].length > MAX_COMPONENT_LORE_LINES) errors.push(`当前版本的物品描述最多支持 ${MAX_COMPONENT_LORE_LINES} 行。`);
     if (!materials.length) errors.push("请至少放入一种配方材料。");
     if (materials.some((item) => !hasItem(item))) errors.push("配方中有不属于当前版本的材料。");
     if (!Number.isInteger(input.resultCount) || input.resultCount < 1 || input.resultCount > 64) errors.push("配方产物数量需为 1–64。");

@@ -44,7 +44,8 @@ export default function VersionFeed() {
     const start = window.setTimeout(() => { void refresh(); }, 0);
     return () => { window.clearTimeout(start); const previous = pending.current; pending.current = null; previous?.abort(); };
   }, [refresh]);
-  const recent = manifest?.versions.filter((version) => showSnapshots ? version.type === "release" || version.type === "snapshot" : version.type === "release").slice(0, 8) ?? [];
+  const recent = manifest?.versions.filter((version) => showSnapshots ? version.type === "release" || version.type === "snapshot" : version.type === "release")
+    .sort((first, second) => Date.parse(second.releaseTime) - Date.parse(first.releaseTime)).slice(0, 8) ?? [];
 
   return <section className="mc-section" id="versions" aria-labelledby="versions-heading"><div className="mc-section-header"><div><span className="mc-overline">06 / RELEASE RADAR</span><h2 id="versions-heading">Java 版本<span>动态</span></h2></div><span className="mc-section-mark" aria-hidden="true">✳</span></div>
     <p className="mc-section-description">直接读取 Mojang 的官方版本目录。页面打开时更新，也可以手动刷新；工具生成器支持的版本以页面顶部列表为准。</p>

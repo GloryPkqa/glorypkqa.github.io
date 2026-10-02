@@ -34,6 +34,7 @@ export type McProcessingRecipe = {
   xp: number | null;
 };
 export type SelectedEnchantment = { name: string; level: number };
+export const MAX_COMPONENT_LORE_LINES = 256;
 
 export const MC_VERSIONS = ["26.1", "1.21.8", "1.21.5", "1.20.6", "1.20.4", "1.17", "1.16.5", "1.12.2", "1.8.9"] as const;
 
@@ -69,6 +70,7 @@ export function makeGiveCommand(input: {
   enchantments: SelectedEnchantment[];
 }) {
   const { version, item, count, target, name, lore, unbreakable, enchantments } = input;
+  if (versionAtLeast(version, "1.20.5") && lore.length > MAX_COMPONENT_LORE_LINES) throw new Error(`当前版本的物品描述最多支持 ${MAX_COMPONENT_LORE_LINES} 行。`);
   const itemId = `minecraft:${item}`;
   const stored = item === "enchanted_book";
 

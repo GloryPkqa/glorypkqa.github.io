@@ -87,7 +87,9 @@ export default function ServerLookup() {
       if (!validStatus(normalized)) throw new Error("返回格式有误");
       setResult(normalized);
       setSource("mcsrvstat"); setLastAddress(host);
-      if (!secondary.online) setFallbackNote("两家服务都未探测到在线响应；这不一定代表游戏客户端无法连接。");
+      if (!secondary.online) setFallbackNote(primary
+        ? "两家服务都未探测到在线响应；这不一定代表游戏客户端无法连接。"
+        : "首个查询源暂时不可用；备用源未探测到在线响应。请在游戏客户端连接验证。");
       else if (primary && !primary.online) setFallbackNote("首个查询源未探测到响应，备用源返回在线。不同服务的探测位置与缓存可能不同。");
     } catch {
       if (pending.current !== controller || controller.signal.aborted) return;

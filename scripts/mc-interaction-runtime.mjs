@@ -25,7 +25,7 @@ export function mount(path, initialProps = {}, options = {}) {
   if (path === "McWorkbench") {
     imports["next/link"] = { default: () => null };
     imports["@/components/ThemeToggle"] = { default: () => null };
-    for (const name of ["ColorTool", "CoordinateTool", "ServerLookup", "PlayerLookup", "VersionFeed", "EffectTool", "TitleTool", "BlockTool", "WorldTool", "SummonTool", "BannerTool", "ProcessingRecipeTool", "DataPackTool"]) imports[`@/components/tools/${name}`] = { default: () => null };
+    for (const name of ["ColorTool", "CoordinateTool", "ServerLookup", "PlayerLookup", "VersionFeed", "EffectTool", "TitleTool", "BlockTool", "WorldTool", "SummonTool", "BannerTool", "ProcessingRecipeTool", "DataPackTool", "ServerLaunchTool", "ServerSizingTool"]) imports[`@/components/tools/${name}`] = { default: () => null };
   }
   const component = loadTs(`../src/components/tools/${path}.tsx`, { ...imports, ...options.imports })[options.exportName ?? "default"];
   function render() {

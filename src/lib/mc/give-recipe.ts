@@ -1,10 +1,16 @@
-import { versionAtLeast, type McCatalog } from "@/lib/mc/give";
+import { MAX_COMPONENT_LORE_LINES, versionAtLeast, type McCatalog } from "@/lib/mc/give";
+import { isCommandTarget, targetErrorHint } from "@/lib/mc/target";
+import { commandWhitespace, compoundNbt, isCommandWhitespace, targetNbtUnsupportedHint, trimCommandWhitespace } from "@/lib/mc/targetNbt";
 
 export type ImportedGiveResult = { item: string; count: number; components: Record<string, unknown> };
 
-function parseSnbt(source: string, modern: boolean): unknown {
+function parseSnbt(source: string, version: string): unknown {
+  const modern = versionAtLeast(version, "1.21.5");
+  const unsupported = targetNbtUnsupportedHint(`@p[nbt={value:${source}}]`);
+  if (unsupported) throw new Error(unsupported);
+  if (!compoundNbt(`{value:${source}}`, version)) throw new Error("指令属性中的 SNBT 格式无效或与当前版本不匹配。");
   let at = 0;
-  const skip = () => { while (/\s/.test(source[at] ?? "")) at++; };
+  const skip = () => { while (at < source.length && isCommandWhitespace(source[at])) at++; };
   const read = (depth: number): unknown => {
     if (depth > 16) throw new Error("指令嵌套层数过多。");
     skip();
@@ -41,7 +47,7 @@ function parseSnbt(source: string, modern: boolean): unknown {
         else {
           const key = source[at] === "'" || source[at] === '"'
             ? read(depth + 1)
-            : (() => { const start = at; while (at < source.length && source[at] !== ":") at++; return source.slice(start, at).trim(); })();
+            : (() => { const start = at; while (at < source.length && source[at] !== ":") at++; return trimCommandWhitespace(source.slice(start, at)); })();
           if (typeof key !== "string" || !key || source[at++] !== ":") throw new Error("指令属性格式不正确。");
           if (Object.hasOwn(object, key)) throw new Error("指令中有重复属性。");
           if (["__proto__", "constructor", "prototype"].includes(key)) throw new Error("指令中有不支持的属性名。");
@@ -55,11 +61,12 @@ function parseSnbt(source: string, modern: boolean): unknown {
       return array ? values : object;
     }
     const start = at;
-    while (at < source.length && !/[\s,\]}]/.test(source[at])) at++;
+    while (at < source.length && !isCommandWhitespace(source[at]) && !",]}".includes(source[at])) at++;
     const token = source.slice(start, at);
     if (token === "true") return true;
     if (token === "false") return false;
-    if (/^-?\d+$/.test(token)) return Number(token);
+    if (/^[+-]?\d+$/.test(token)) return Number(token);
+    if ((modern && /^[0-9.+-]/.test(token)) || /[()]/.test(token)) throw new Error("暂不支持导入这类 SNBT 数字或表达式；请使用本站 /give 工具重新生成。");
     if (token) return token;
     throw new Error("指令属性格式不正确。");
   };
@@ -82,16 +89,43 @@ function topLevelParts(source: string) {
     } else if (char === "'" || char === '"') quote = char;
     else if (char === "{" || char === "[") depth++;
     else if (char === "}" || char === "]") depth--;
-    else if (char === "," && depth === 0) { parts.push(source.slice(start, at).trim()); start = at + 1; }
+    else if (char === "," && depth === 0) { parts.push(trimCommandWhitespace(source.slice(start, at))); start = at + 1; }
     if (depth < 0) throw new Error("指令中的括号不匹配。");
   }
   if (quote || depth) throw new Error("指令中的引号或括号没有闭合。");
-  parts.push(source.slice(start).trim());
+  parts.push(trimCommandWhitespace(source.slice(start)));
+  if (parts.length > 1 && parts.at(-1) === "") parts.pop();
   return parts;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// Selector arguments may contain whitespace, quoted names, nested compounds
+// and lists. Only whitespace outside the whole selector separates the item.
+function giveItemSource(source: string) {
+  const prefix = source.match(new RegExp(`^/?give${commandWhitespace.source}+`));
+  if (!prefix) throw new Error("请粘贴完整的 Java 版 /give 指令。");
+  let at = prefix[0].length;
+  const targetStart = at;
+  const brackets: string[] = [];
+  let quote = "";
+  for (; at < source.length; at++) {
+    const char = source[at];
+    if (quote) {
+      if (char === "\\") at++;
+      else if (char === quote) quote = "";
+    } else if (char === "'" || char === '"') quote = char;
+    else if (char === "[" || char === "{") brackets.push(char);
+    else if (char === "]" || char === "}") {
+      if (brackets.pop() !== (char === "]" ? "[" : "{")) throw new Error("目标选择器中的括号不匹配。");
+    } else if (isCommandWhitespace(char) && !brackets.length) break;
+    if (brackets.length > 16) throw new Error("目标选择器的嵌套层数过多。");
+  }
+  if (quote || brackets.length) throw new Error("目标选择器中的引号或括号没有闭合。");
+  if (at === targetStart || at === source.length) throw new Error("请粘贴包含目标和物品的完整 /give 指令。");
+  return { target: source.slice(targetStart, at), itemSource: trimCommandWhitespace(source.slice(at)) };
 }
 
 function validateLiteralText(value: unknown, depth = 0): void {
@@ -110,13 +144,16 @@ function validateLiteralText(value: unknown, depth = 0): void {
 
 export function importGiveForRecipe(command: string, version: string, catalog?: McCatalog): ImportedGiveResult {
   if (!versionAtLeast(version, "1.20.5")) throw new Error(`${version} 的原版工作台配方不能直接生成带属性的物品；请选 1.20.6 或更新版本。`);
-  const source = command.trim();
+  const source = trimCommandWhitespace(command);
   if (source.length > 12_000) throw new Error("指令过长，请粘贴本站生成的 /give 指令。");
-  const match = source.match(/^\/?give\s+\S+\s+((?:minecraft:)?[a-z0-9_]+)([\s\S]*)$/i);
+  const { target, itemSource } = giveItemSource(source);
+  if (!isCommandTarget(target, version, { playersOnly: true })) throw new Error(targetErrorHint(target, version, { playersOnly: true }));
+  const match = itemSource.match(/^((?:minecraft:)?[a-z0-9_]+)([\s\S]*)$/);
   if (!match) throw new Error("请粘贴完整的 Java 版 /give 指令。");
   const item = match[1].replace(/^minecraft:/i, "").toLowerCase();
   if (catalog && (catalog.version !== version || !catalog.items.some((entry) => entry.name === item))) throw new Error("这件物品不在当前版本的物品目录中，请检查 /give 的版本。");
-  let tail = match[2].trim();
+  if (isCommandWhitespace(match[2][0] ?? "") && /^[\[{]/.test(trimCommandWhitespace(match[2]))) throw new Error("物品组件必须紧接物品 ID，中间不能有空格。");
+  let tail = trimCommandWhitespace(match[2]);
   let rawComponents = "";
   if (tail.startsWith("{")) throw new Error("这条 /give 使用旧版 NBT；当前配方需要对应版本的物品组件指令。");
   if (tail.startsWith("[")) {
@@ -131,8 +168,9 @@ export function importGiveForRecipe(command: string, version: string, catalog?: 
       else if (char === "]" && --depth === 0) { end = at; break; }
     }
     if (end < 0) throw new Error("指令中的组件方括号没有闭合。");
-    rawComponents = tail.slice(1, end);
-    tail = tail.slice(end + 1).trim();
+    rawComponents = trimCommandWhitespace(tail.slice(1, end));
+    if (tail.length > end + 1 && !isCommandWhitespace(tail[end + 1])) throw new Error("物品组件与产物数量之间需要空格。");
+    tail = trimCommandWhitespace(tail.slice(end + 1));
   }
   if (tail && !/^\d+$/.test(tail)) throw new Error("无法识别指令末尾的产物数量。");
   const count = tail ? Number(tail) : 1;
@@ -142,13 +180,14 @@ export function importGiveForRecipe(command: string, version: string, catalog?: 
   if (rawComponents) for (const part of topLevelParts(rawComponents)) {
     const separator = part.indexOf("=");
     if (separator < 1) throw new Error("指令组件格式不正确。");
-    const key = part.slice(0, separator).replace(/^minecraft:/, "");
+    const key = trimCommandWhitespace(part.slice(0, separator)).replace(/^minecraft:/, "");
     if (!["custom_name", "lore", "enchantments", "stored_enchantments", "unbreakable"].includes(key)) throw new Error(`暂不支持导入 ${key}；请使用本站 /give 工具生成的指令。`);
     if (`minecraft:${key}` in components) throw new Error(`重复的 ${key} 属性。`);
-    const value = parseSnbt(part.slice(separator + 1), versionAtLeast(version, "1.21.5"));
+    const value = parseSnbt(part.slice(separator + 1), version);
     if (key === "custom_name" || key === "lore") {
       const entries = key === "lore" ? value : [value];
       if (!Array.isArray(entries) || entries.some((entry) => version === "1.20.6" ? typeof entry !== "string" : !isObject(entry))) throw new Error("名称或描述的格式与所选版本不匹配。");
+      if (key === "lore" && entries.length > MAX_COMPONENT_LORE_LINES) throw new Error(`当前版本的物品描述最多支持 ${MAX_COMPONENT_LORE_LINES} 行。`);
       for (const entry of entries) {
         let text: unknown = entry;
         if (version === "1.20.6") {

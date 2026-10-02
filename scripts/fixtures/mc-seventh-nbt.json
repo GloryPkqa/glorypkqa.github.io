@@ -1,0 +1,771 @@
+{
+  "source": "Official Minecraft 26.1 server 3872a7f07a1a595e651aef8b058dfc2bb3772f46, NativeMcAudit command parser, JDK25; Character-name escapes are explicitly unsupported by the site.",
+  "cases": [
+    {
+      "snbt": "{v:0}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:+1}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:-1}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:01}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:00}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:00.1}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:01.0}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1.}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:.1}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1e2}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1e+2}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1e-2}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1e9999}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:1e39f}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:1e-9999f}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:NaN}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:Inf}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:Infinity}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:-Infinity}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:.foo}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:-foo}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:+foo}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:1_2}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1__2}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1_}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:_1}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0_1}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:0xCAFE}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0XCAFE}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0b101}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0B101}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0b102}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:0xb}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0x11b}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0x11ub}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0xFF}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:-0xff}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:-0xffsi}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0xFFFFFFFF}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0x100000000}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:0xffffffffffffffffL}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0x10000000000000000L}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:240ub}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:240sb}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:-1ub}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:255ub}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:256ub}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:127b}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:128b}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:-128b}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:-129b}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:32767s}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:32768s}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:65535us}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:65536us}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:2147483647}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:2147483648}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:2147483648ui}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:4294967295ui}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:4294967296ui}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:9223372036854775807L}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:9223372036854775808L}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:18446744073709551615ul}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:18446744073709551616ul}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:1i}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1I}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1UB}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1uB}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1Sb}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1si}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1l}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1f}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1d}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:true}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:false}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:TRUE}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:bool(true)}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:bool(0)}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:bool(-0.1)}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:bool(1ub)}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:bool(\"true\")}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:bool()}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:bool(1,2)}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:uuid(\"d5ebe79d-588c-4cba-b338-f5f27109ec83\")}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:uuid(\"1-2-3-4-5\")}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:uuid(1)}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:uuid(\"bad\")}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:\"\\n\"}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:\"\\q\"}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:\"\\uD800\"}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:\"\\U00110000\"}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:\"\\N{SNOWMAN}\"}",
+      "accepted": true,
+      "supported": false
+    },
+    {
+      "snbt": "{v:\"\\N{FAKE CHARACTER}\"}",
+      "accepted": false,
+      "supported": false
+    },
+    {
+      "snbt": "{v:-0ub}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:-0x0}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:+0xff}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0xFFub}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0xA_B}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:0x_1}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:0_0}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:1e1_0}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1.e2}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:.1e2}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:1.f}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:bool(1,)}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:bool (1)}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:uuid(\"1ffffffff-2-3-4-5\")}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:uuid(\"+1-2-3-4-5\")}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:bool}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:uuid}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:true()}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:null}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:\"\\x41\"}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:\"\\U0001F600\"}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:\"\\0\"}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:\"\\v\"}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;1]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[B;-1]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[B;128]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;2147483648]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;9223372036854775808]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;1b]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[B;128b]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;1s]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;1i]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;1l]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;true]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;bool(true)]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;0xff]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[B;0xffffffff]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;-0xff]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;240ub]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[B;1d]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;1.0]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[B;uuid(\"1-2-3-4-5\")]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;1]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[I;-1]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[I;128]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[I;2147483648]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;9223372036854775808]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;1b]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[I;128b]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;1s]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[I;1i]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[I;1l]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;true]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;bool(true)]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;0xff]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[I;0xffffffff]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[I;-0xff]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;240ub]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[I;1d]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;1.0]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[I;uuid(\"1-2-3-4-5\")]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[L;1]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;-1]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;128]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;2147483648]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;9223372036854775808]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[L;1b]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;128b]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[L;1s]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;1i]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;1l]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;true]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[L;bool(true)]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[L;0xff]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;0xffffffff]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;-0xff]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[L;240ub]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[L;1d]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[L;1.0]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[L;uuid(\"1-2-3-4-5\")]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[1,\"a\"]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[1,]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[,]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[1,,]}",
+      "accepted": false
+    },
+    {
+      "snbt": "{a:1,}",
+      "accepted": true
+    },
+    {
+      "snbt": "{,}",
+      "accepted": false
+    },
+    {
+      "snbt": "{a:1,,}",
+      "accepted": false
+    },
+    {
+      "snbt": "{\"\":1}",
+      "accepted": false
+    },
+    {
+      "snbt": "{1:1}",
+      "accepted": true
+    },
+    {
+      "snbt": "{01:1}",
+      "accepted": true
+    },
+    {
+      "snbt": "{.a:1}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:hello.world}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:foo_bar}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:foo:bar}",
+      "accepted": false
+    },
+    {
+      "snbt": "{v:[ B;1]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[B ;1]}",
+      "accepted": true
+    },
+    {
+      "snbt": "{v:[B;1,]}",
+      "accepted": true
+    }
+  ]
+}

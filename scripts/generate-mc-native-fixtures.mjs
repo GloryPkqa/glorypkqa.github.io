@@ -1,6 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { loadTs } from './mc-test-runtime.mjs';
 import { mount } from './mc-interaction-runtime.mjs';
+import { modernTargetNativeFixtures } from './mc-target-fixtures.mjs';
+import { MC_ITEM_NATIVE_FIXTURES } from './mc-item-fixtures.mjs';
 const {makeGiveCommand}=loadTs('../src/lib/mc/give.ts');
 const {makePotionCommand}=loadTs('../src/lib/mc/potion.ts');
 const {makeBannerCommand,BANNER_COLORS,BANNER_PATTERNS}=loadTs('../src/lib/mc/banner.ts');
@@ -28,6 +30,11 @@ for(const b of catalog.blocks)add('command',`block:${b.name}`,`/setblock 0 64 0 
 for(const e of catalog.entities)add('command',`entity:${e.name}`,`/summon minecraft:${e.name} ~ ~ ~`);
 for(const e of catalog.effects)add('command',`effect:${e.name}`,`/effect give @p minecraft:${e.name} 1000000 255 true`);
 for(const e of catalog.entities)add('entity',e.name,'minecraft:'+e.name);
+for(const name of ['player','fishing_bobber'])cases.push({kind:'entity',id:`seventh-forbidden-entity:${name}`,value:`minecraft:${name}`,reject:true});
+add('item','seventh-default-stone-stack',{id:'minecraft:stone',count:1});
+cases.push({kind:'item',id:'seventh-unknown-stack',value:{id:'minecraft:missing_audit_item',count:1},reject:true});
+cases.push(...modernTargetNativeFixtures());
+cases.push(...MC_ITEM_NATIVE_FIXTURES);
 // Negative controls ensure a broken or permissive oracle cannot pass silently.
 for(const n of [2147483648,9007199254740991,-2147483649])cases.push({kind:'command',id:`block-overflow:${n}`,value:`/setblock ${n} 64 0 minecraft:stone`,reject:true});
 for(const [x,y,z,reject] of [[30000000,64,0,true],[-30000001,64,0,true],[0,20000000,0,true],[0,-20000001,0,true],[-30000000,-20000000,29999999,false],[29999999,19999999,-30000000,false]])cases.push({kind:'position',id:`position:${x}:${y}:${z}`,value:[x,y,z],reject});

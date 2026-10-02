@@ -4,7 +4,9 @@ export function zipFiles(files: { name: string; content: string }[]) {
   const encoder = new TextEncoder();
   const chunks: Uint8Array[] = [];
   const directory: Uint8Array[] = [];
+  const paths = new Set<string>();
   let offset = 0;
+  if (files.length > 0xffff) throw new Error("ZIP 文件数量超过格式上限");
 
   function crc32(bytes: Uint8Array) {
     let crc = 0xffffffff;
@@ -16,9 +18,13 @@ export function zipFiles(files: { name: string; content: string }[]) {
   }
 
   for (const file of files) {
-    if (!file.name || file.name.startsWith("/") || /^[a-z]:/i.test(file.name) || file.name.split("/").some((part) => part === ".." || part === ".") || file.name.includes("\\")) throw new Error("ZIP 路径无效");
+    if (!file.name || file.name.startsWith("/") || /^[a-z]:/i.test(file.name) || file.name.split("/").some((part) => !part || part === ".." || part === ".") || file.name.includes("\\") || file.name.includes("\0")) throw new Error("ZIP 路径无效");
+    if (paths.has(file.name)) throw new Error("ZIP 中存在重复路径");
+    paths.add(file.name);
     const name = encoder.encode(file.name);
     const body = encoder.encode(file.content);
+    if (name.length > 0xffff) throw new Error("ZIP 文件名超过格式长度上限");
+    if (body.length > 0xffffffff || offset + 30 + name.length + body.length > 0xffffffff) throw new Error("ZIP 内容超过格式大小上限");
     const crc = crc32(body);
     const local = new Uint8Array(30 + name.length);
     const lv = new DataView(local.buffer);
@@ -49,6 +55,7 @@ export function zipFiles(files: { name: string; content: string }[]) {
   }
 
   const directorySize = directory.reduce((sum, part) => sum + part.length, 0);
+  if (directorySize > 0xffffffff || offset + directorySize + 22 > 0xffffffff) throw new Error("ZIP 内容超过格式大小上限");
   const end = new Uint8Array(22);
   const ev = new DataView(end.buffer);
   ev.setUint32(0, 0x06054b50, true);

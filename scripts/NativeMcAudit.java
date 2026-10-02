@@ -19,6 +19,7 @@ public class NativeMcAudit {
  public static void main(String[] args) throws Exception {
   SharedConstants.tryDetectVersion(); Bootstrap.bootStrap();
   HolderLookup.Provider provider=VanillaRegistries.createLookup();
+  net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(provider).forEach(init -> init.apply());
   var jsonOps=provider.createSerializationContext(JsonOps.INSTANCE);
   var nbtOps=provider.createSerializationContext(NbtOps.INSTANCE);
   var commands=new Commands(Commands.CommandSelection.ALL,Commands.createValidationContext(provider));
@@ -36,6 +37,7 @@ public class NativeMcAudit {
      }
      case "text": ComponentSerialization.CODEC.parse(nbtOps,TagParser.create(NbtOps.INSTANCE).parseFully(row.get("value").getAsString())).getOrThrow(); break;
      case "recipe": Recipe.CODEC.parse(jsonOps,row.get("value")).getOrThrow(); break;
+     case "item": net.minecraft.world.item.ItemStack.CODEC.parse(jsonOps,row.get("value")).getOrThrow(); break;
      case "loot": LootTable.DIRECT_CODEC.parse(jsonOps,row.get("value")).getOrThrow(); break;
      case "pack": PackMetadataSection.SERVER_TYPE.codec().parse(jsonOps,row.get("value")).getOrThrow(); break;
      case "entity": if(!net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getValue(net.minecraft.resources.Identifier.parse(row.get("value").getAsString())).canSummon()) throw new Exception("Entity cannot be summoned"); break;

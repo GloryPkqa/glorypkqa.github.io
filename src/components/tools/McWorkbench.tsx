@@ -18,9 +18,13 @@ import SummonTool from "@/components/tools/SummonTool";
 import BannerTool from "@/components/tools/BannerTool";
 import ProcessingRecipeTool from "@/components/tools/ProcessingRecipeTool";
 import DataPackTool from "@/components/tools/DataPackTool";
+import ServerLaunchTool from "@/components/tools/ServerLaunchTool";
+import ServerSizingTool from "@/components/tools/ServerSizingTool";
 import { isMcCatalog } from "@/lib/mc/catalog";
+import { isCommandTarget, targetErrorHint } from "@/lib/mc/target";
 import {
   MC_VERSIONS,
+  MAX_COMPONENT_LORE_LINES,
   enchantmentWarnings,
   makeGiveCommand,
   versionAtLeast,
@@ -44,6 +48,8 @@ const CATEGORY_ITEMS = [
   { name: "旗帜图案", detail: "BANNER STUDIO", number: "13", href: "#banner", minVersion: "1.16" },
   { name: "进阶配方", detail: "PROCESSING RECIPES", number: "14", href: "#processing", minVersion: "1.16" },
   { name: "数据包制作", detail: "DATAPACK FORGE", number: "15", href: "#datapack", minVersion: "1.16" },
+  { name: "开服命令", detail: "SERVER LAUNCH", number: "16", href: "#launch", available: true },
+  { name: "配置估算", detail: "SERVER SIZING", number: "17", href: "#sizing", available: true },
 ];
 
 export function CopyButton({ value }: { value: string }) {
@@ -96,11 +102,11 @@ export function GiveTool({ version, catalog }: { version: string; catalog: McCat
   const [itemSearch, setItemSearch] = useState("");
   const [itemLimit, setItemLimit] = useState(60);
   const [target, setTarget] = useState("@p");
-  const [count, setCount] = useState(1);
+  const [count, setCount] = useState<number | "">(1);
   const [name, setName] = useState("");
   const [lore, setLore] = useState("");
   const [unbreakable, setUnbreakable] = useState(false);
-  const [selected, setSelected] = useState<SelectedEnchantment[]>([]);
+  const [selected, setSelected] = useState<(Omit<SelectedEnchantment, "level"> & { level: number | "" })[]>([]);
   const [enchantToAdd, setEnchantToAdd] = useState("");
 
   const normalizedItem = item.trim().toLowerCase().replace(/^minecraft:/, "");
@@ -110,22 +116,25 @@ export function GiveTool({ version, catalog }: { version: string; catalog: McCat
     return catalog?.items.filter((entry) => !query || entry.name.includes(query) || entry.displayName.toLowerCase().includes(query) || entry.displayNameZh.toLowerCase().includes(query)) ?? [];
   }, [catalog, itemSearch]);
   const normalizedTarget = target.trim();
-  const targetValid = /^(@[aprs](\[[^\]]*\])?|[A-Za-z0-9_]{3,16})$/.test(normalizedTarget);
+  const targetValid = isCommandTarget(normalizedTarget, version, { playersOnly: true });
   const selectedForVersion = selected.filter((entry) => catalog?.enchantments.some((option) => option.name === entry.name));
   const availableEnchantments = catalog?.enchantments.filter((entry) => !selected.some((chosen) => chosen.name === entry.name)) ?? [];
   const pendingEnchantment = availableEnchantments.some((entry) => entry.name === enchantToAdd) ? enchantToAdd : "";
-  const warnings = enchantmentWarnings(selectedForVersion, catalog);
+  const numbersValid = Number.isInteger(count) && Number(count) >= 1 && Number(count) <= 64 && selectedForVersion.every((entry) => Number.isInteger(entry.level) && Number(entry.level) >= 1 && Number(entry.level) <= 255);
+  const loreLines = lore.split("\n").map((line) => line.trim()).filter(Boolean);
+  const loreValid = !versionAtLeast(version, "1.20.5") || loreLines.length <= MAX_COMPONENT_LORE_LINES;
+  const warnings = enchantmentWarnings(selectedForVersion.map((entry) => ({ ...entry, level: Number(entry.level) })), catalog);
 
-  const command = matchingItem && targetValid
+  const command = matchingItem && targetValid && numbersValid && loreValid
     ? makeGiveCommand({
       version,
       item: normalizedItem,
-      count: Math.max(1, Math.min(64, Math.floor(count || 1))),
+      count: Number(count),
       target: normalizedTarget,
       name: name.trim(),
-      lore: lore.split("\n").map((line) => line.trim()).filter(Boolean),
+      lore: loreLines,
       unbreakable,
-      enchantments: selectedForVersion,
+      enchantments: selectedForVersion.map((entry) => ({ ...entry, level: Number(entry.level) })),
     })
     : "";
 
@@ -153,7 +162,7 @@ export function GiveTool({ version, catalog }: { version: string; catalog: McCat
               <em>{!catalog ? "正在载入该版本的物品数据…" : matchingItem ? `${matchingItem.displayNameZh} · ${matchingItem.displayName} · minecraft:${matchingItem.name}` : "请选择列表中的有效物品 ID"}</em>
             </div>
             <label className="mc-field"><span>目标 <small>TARGET</small></span><input value={target} onChange={(event) => setTarget(event.target.value)} spellCheck={false} /></label>
-            <label className="mc-field"><span>数量 <small>COUNT</small></span><input type="number" min="1" max="64" value={count} onChange={(event) => setCount(Number(event.target.value))} /></label>
+            <label className="mc-field"><span>数量 <small>COUNT</small></span><input type="number" min="1" max="64" value={count} onChange={(event) => setCount(event.target.value === "" ? "" : Number(event.target.value))} /></label>
           </div>
 
           <div className="mc-form-section-label"><span>02</span> 自定义外观</div>
@@ -167,7 +176,7 @@ export function GiveTool({ version, catalog }: { version: string; catalog: McCat
           <div className="mc-add-enchant"><select value={pendingEnchantment} onChange={(event) => setEnchantToAdd(event.target.value)} aria-label="选择附魔"><option value="">选择要添加的附魔…</option>{availableEnchantments.map((entry) => <option key={entry.name} value={entry.name}>{entry.displayNameZh} · {entry.displayName}</option>)}</select><button type="button" onClick={addEnchantment} disabled={!pendingEnchantment}>添加 ＋</button></div>
           {selectedForVersion.length ? <div className="mc-enchant-list">{selectedForVersion.map((entry) => {
             const details = catalog?.enchantments.find((option) => option.name === entry.name);
-            return <div className="mc-enchant-row" key={entry.name}><span><strong>{details?.displayNameZh ?? entry.name} <small>{details?.displayName}</small></strong><small>{entry.name} · 原版最高 {details?.maxLevel ?? "?"}</small></span><label>等级 <input type="number" min="1" max="255" value={entry.level} onChange={(event) => setSelected((previous) => previous.map((chosen) => chosen.name === entry.name ? { ...chosen, level: Math.max(1, Math.min(255, Math.floor(Number(event.target.value) || 1))) } : chosen))} /></label><button type="button" className="mc-remove" aria-label={`移除 ${entry.name}`} onClick={() => setSelected((previous) => previous.filter((chosen) => chosen.name !== entry.name))}>×</button></div>;
+            return <div className="mc-enchant-row" key={entry.name}><span><strong>{details?.displayNameZh ?? entry.name} <small>{details?.displayName}</small></strong><small>{entry.name} · 原版最高 {details?.maxLevel ?? "?"}</small></span><label>等级 <input type="number" min="1" max="255" value={entry.level} onChange={(event) => setSelected((previous) => previous.map((chosen) => chosen.name === entry.name ? { ...chosen, level: event.target.value === "" ? "" : Number(event.target.value) } : chosen))} /></label><button type="button" className="mc-remove" aria-label={`移除 ${entry.name}`} onClick={() => setSelected((previous) => previous.filter((chosen) => chosen.name !== entry.name))}>×</button></div>;
           })}</div> : <p className="mc-empty-hint">还没有添加附魔。试试给剑加上锋利与耐久。</p>}
         </div>
 
@@ -176,9 +185,12 @@ export function GiveTool({ version, catalog }: { version: string; catalog: McCat
           <div className="mc-item-display"><div className="mc-item-glyph" aria-hidden="true"><span>✦</span></div><span className="mc-item-display-name">{name.trim() || matchingItem?.displayNameZh || "选择物品"}</span><span className="mc-item-display-id">{matchingItem ? `${matchingItem.displayName} · minecraft:${matchingItem.name}` : "minecraft:..."}</span>{selectedForVersion.length > 0 && <span className="mc-enchanted-badge">✧ 附魔 × {selectedForVersion.length}</span>}</div>
           <div className="mc-code-heading"><span>生成的指令</span><span>COMMAND</span></div>
           <pre className="mc-code-output"><code>{command || "// 输入有效物品 ID 和目标后生成指令"}</code></pre>
-          {!targetValid && <p className="mc-output-warning">目标只能是玩家名或有效选择器，例如 @p、@s。</p>}
+          {!targetValid && <p className="mc-output-warning">{targetErrorHint(normalizedTarget, version, { playersOnly: true })}</p>}
+          {!numbersValid && <p className="mc-output-warning" role="alert">请填写完整的整数数量（1–64）和附魔等级（1–255）后再复制。</p>}
+          {!loreValid && <p className="mc-output-warning" role="alert">当前版本的物品描述最多支持 {MAX_COMPONENT_LORE_LINES} 行，请缩短描述后再复制。</p>}
           {warnings.map((warning) => <p className="mc-output-warning" key={warning}>⚠ {warning}</p>)}
           <CopyButton value={command} />
+          {command.length > 256 && <p className="mc-output-note">这条指令较长，建议通过命令方块执行；写入 .mcfunction 时去掉开头的 /。</p>}
           <p className="mc-output-note">生成器检查数据与格式；最终请在对应游戏版本中验证。非常规高等级附魔可能无法通过铁砧获得。</p>
         </aside>
       </div>
@@ -218,7 +230,7 @@ export default function McWorkbench() {
 
       <div className="mc-main-wrap" id="top"><section className="mc-hero"><div className="mc-hero-copy"><div className="mc-kicker"><span className="mc-kicker-square" /> PKQA CENTER / A LITTLE WORLD OF TOOLS</div><h1>MC 工具<span>工坊<span className="mc-hero-dot">.</span></span></h1><p>把灵感变成指令，把复杂留给工具。<br />从一把独一无二的剑开始，慢慢搭建属于你的世界。</p><div className="mc-hero-actions"><CraftStartButton href={versionAtLeast(version, "1.16") ? "#give" : "#colors"} /><span>适用于 Minecraft Java Edition</span></div></div><div className="mc-hero-art" aria-hidden="true"><div className="mc-art-ring mc-art-ring-outer"/><div className="mc-art-ring mc-art-ring-inner"/><div className="mc-art-cube"><span className="mc-cube-top"/><span className="mc-cube-left"/><span className="mc-cube-right"/></div><span className="mc-art-orbit-one">✧</span><span className="mc-art-orbit-two">✦</span><span className="mc-art-caption">CRAFT YOUR OWN<br />POSSIBILITIES</span></div></section>
 
-      <section className="mc-directory" aria-labelledby="mc-directory-heading"><div className="mc-directory-heading"><div><span className="mc-overline">EXPLORE THE WORKSHOP</span><h2 id="mc-directory-heading">从这里<span>开始</span></h2></div><label className="mc-version-switch"><span>游戏版本 <small>VERSION</small></span><select value={version} onChange={(event) => { if (event.target.value === version) return; setVersion(event.target.value); setCatalog(null); setDataError(""); }}>{MC_VERSIONS.map((entry) => <option key={entry} value={entry}>Java {entry}</option>)}</select></label></div><div className="mc-directory-grid">{visibleItems.map((entry) => <a className="mc-directory-card is-available" href={entry.href} key={entry.number}><span className="mc-directory-number">{entry.number} / {String(CATEGORY_ITEMS.length).padStart(2, "0")}</span><span className="mc-directory-icon" aria-hidden="true">{({ "01": "⚒", "02": "✦", "03": "⌖", "04": "◈", "05": "♙", "06": "✳", "07": "✚", "08": "◇", "09": "▣", "10": "⊞", "11": "☀", "12": "♞", "13": "⚑", "14": "♨", "15": "▤" } as Record<string, string>)[entry.number]}</span><strong>{entry.name}</strong><small>{entry.detail}</small><span className="mc-directory-arrow">↗</span></a>)}</div><div className="mc-data-note"><span className="mc-data-indicator" /> {dataError || (catalog ? `已载入 Java ${version} 数据 · ${itemCount} 种物品 · ${catalog.enchantments.length} 种附魔${catalog.blocks ? ` · ${catalog.blocks.length} 种方块` : ""}` : "正在读取版本数据…")}{!versionAtLeast(version, "1.16") && <span> · 旧版物品元数据与配方格式不同，相关生成器已隐藏。</span>}</div></section>
+      <section className="mc-directory" aria-labelledby="mc-directory-heading"><div className="mc-directory-heading"><div><span className="mc-overline">EXPLORE THE WORKSHOP</span><h2 id="mc-directory-heading">从这里<span>开始</span></h2></div><label className="mc-version-switch"><span>游戏版本 <small>VERSION</small></span><select value={version} onChange={(event) => { if (event.target.value === version) return; setVersion(event.target.value); setCatalog(null); setDataError(""); }}>{MC_VERSIONS.map((entry) => <option key={entry} value={entry}>Java {entry}</option>)}</select></label></div><div className="mc-directory-grid">{visibleItems.map((entry) => <a className="mc-directory-card is-available" href={entry.href} key={entry.number}><span className="mc-directory-number">{entry.number} / {String(CATEGORY_ITEMS.length).padStart(2, "0")}</span><span className="mc-directory-icon" aria-hidden="true">{({ "01": "⚒", "02": "✦", "03": "⌖", "04": "◈", "05": "♙", "06": "✳", "07": "✚", "08": "◇", "09": "▣", "10": "⊞", "11": "☀", "12": "♞", "13": "⚑", "14": "♨", "15": "▤", "16": "▶", "17": "▥" } as Record<string, string>)[entry.number]}</span><strong>{entry.name}</strong><small>{entry.detail}</small><span className="mc-directory-arrow">↗</span></a>)}</div><div className="mc-data-note"><span className="mc-data-indicator" /> {dataError || (catalog ? `已载入 Java ${version} 数据 · ${itemCount} 种物品 · ${catalog.enchantments.length} 种附魔${catalog.blocks ? ` · ${catalog.blocks.length} 种方块` : ""}` : "正在读取版本数据…")}{!versionAtLeast(version, "1.16") && <span> · 旧版物品元数据与配方格式不同，相关生成器已隐藏。</span>}</div></section>
 
       {catalog && catalog.sourceVersion !== version && <p className="mc-version-source-note">Java {version} 的目录使用 minecraft-data 收录的 {catalog.sourceVersion} 数据；请在目标客户端核对最终指令。</p>}
       {dataError && <button type="button" className="mc-recipe-more" onClick={() => { setDataError(""); setDataAttempt((attempt) => attempt + 1); }}>重新载入版本数据 ↻</button>}
@@ -237,6 +249,8 @@ export default function McWorkbench() {
       {versionAtLeast(version, "1.16") && <BannerTool version={version} />}
       {versionAtLeast(version, "1.16") && <ProcessingRecipeTool version={version} catalog={catalog} />}
       {versionAtLeast(version, "1.16") && <DataPackTool version={version} catalog={catalog} />}
+      <ServerLaunchTool version={version} />
+      <ServerSizingTool version={version} />
 
       <section className="mc-upcoming mc-section" id="upcoming"><span className="mc-overline">MORE TO CRAFT</span><h2>下一站，还有更多<span>可能。</span></h2><p>结构蓝图、更多指令生成器等工具会依次加入工坊。每个工具都会保留清晰的版本与适用范围说明。</p><div className="mc-upcoming-stamp">WORK IN PROGRESS <span>✳</span></div></section>
       <footer className="mc-footer"><Link href="/">← 返回 Pkqa Center</Link><span>MC 工具工坊 · 非官方 Minecraft 爱好者工具 · Made by GloryPkqa</span><a href="https://github.com/PrismarineJS/minecraft-data" target="_blank" rel="noopener noreferrer">物品数据：PrismarineJS / minecraft-data ↗</a></footer></div>

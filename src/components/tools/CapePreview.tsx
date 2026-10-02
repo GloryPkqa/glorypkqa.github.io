@@ -7,6 +7,7 @@ export default function CapePreview({ skinUrl, capeUrl, playerName }: { skinUrl:
   const frame = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [failedResource, setFailedResource] = useState("");
+  const [failedFallbackResource, setFailedFallbackResource] = useState("");
   const resource = `${skinUrl}\n${capeUrl}`;
   const failed = failedResource === resource;
 
@@ -14,6 +15,10 @@ export default function CapePreview({ skinUrl, capeUrl, playerName }: { skinUrl:
     let disposed = false;
     let viewer: import("skinview3d").SkinViewer | undefined;
     let resizeObserver: ResizeObserver | undefined;
+    const release = () => {
+      resizeObserver?.disconnect(); resizeObserver = undefined;
+      viewer?.dispose(); viewer = undefined;
+    };
     void (async () => {
       try {
         const { SkinViewer } = await import("skinview3d");
@@ -29,14 +34,14 @@ export default function CapePreview({ skinUrl, capeUrl, playerName }: { skinUrl:
         });
         resizeObserver.observe(frame.current);
         await Promise.all([viewer.loadSkin(skinUrl), viewer.loadCape(capeUrl)]);
-        if (!disposed) viewer.render();
+        if (!disposed) { viewer.render(); setFailedResource(""); setFailedFallbackResource(""); }
       } catch {
-        resizeObserver?.disconnect(); viewer?.dispose(); viewer = undefined;
-        if (!disposed) setFailedResource(resource);
+        release();
+        if (!disposed) { setFailedResource(resource); setFailedFallbackResource(""); }
       }
     })();
-    return () => { disposed = true; resizeObserver?.disconnect(); viewer?.dispose(); };
+    return () => { disposed = true; release(); };
   }, [skinUrl, capeUrl, resource]);
 
-  return <div className="mc-cape-preview" ref={frame} aria-label={`${playerName} 当前装备的披风`}><canvas hidden={failed} ref={canvas} role="img" aria-label={`${playerName} 的 3D 人物背面与披风`} />{failed && <img src={capeUrl} width="64" height="96" alt={`${playerName} 的披风贴图`} />}</div>;
+  return <div className="mc-cape-preview" ref={frame} aria-label={`${playerName} 当前装备的披风`}><canvas hidden={failed} ref={canvas} role="img" aria-label={`${playerName} 的 3D 人物背面与披风`} />{failed && (failedFallbackResource === resource ? <span className="mc-profile-cape-empty">披风预览暂不可用</span> : <img src={capeUrl} width="64" height="96" alt={`${playerName} 的披风贴图`} onError={() => setFailedFallbackResource(resource)} />)}</div>;
 }

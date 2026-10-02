@@ -95,7 +95,7 @@ assert.match(ui.text(), /玩家不存在/);
 ui.edit("Notch"); ui.submit(); respond(ui.requests[4], "", 429); await flush();
 assert.match(ui.text(), /查询太频繁/);
 ui.submit(); ui.requests[5].reject(new Error("Network unavailable")); await flush();
-assert.match(ui.text(), /Network unavailable/);
+assert.match(ui.text(), /玩家查询暂时不可用/);
 assert.equal(ui.find("button").props.disabled, false);
 
 ui.submit();

@@ -49,7 +49,7 @@ export default function BannerTool({ version }: { version: string }) {
     </div><aside className="mc-output-panel mc-banner-output"><div className="mc-output-top"><span><i /> LIVE DESIGN</span><span>JAVA · {version}</span></div>
       <div className="mc-banner-scene"><div className={`mc-banner-artifact is-${target}`}><div className="mc-banner-cloth" style={{ backgroundColor: bannerColor(base)?.hex }}>{validLayers.map((layer, index) => <PatternMask key={`${index}-${layer.pattern}-${layer.color}`} pattern={layer.pattern} color={layer.color} />)}</div>{target === "banner" && <span className="mc-banner-pole" />}{target === "shield" && <span className="mc-banner-shield-rim" />}</div><div className="mc-banner-preview-caption"><span>{target === "banner" ? "BANNER" : "SHIELD"}</span><strong>{bannerColor(base)?.zh} · {validLayers.length} 层图案</strong></div></div>
       <div className="mc-code-heading"><span>生成的指令</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{command}</code></pre><button type="button" className="mc-copy-button" onClick={() => copy(command)}>{isCopied(command) ? "已复制 ✓" : "复制旗帜指令 ↗"}</button>{isFailed(command) && <p className="mc-output-warning" role="alert">复制失败，请重试或手动选中指令复制。</p>}
-      <p className="mc-output-note">图案贴图取自 <a href="https://github.com/AiverAiva/BannerCraft" target="_blank" rel="noopener noreferrer">BannerCraft ↗</a>（MIT）；预览为正面平面效果，游戏内旗帜和盾牌的立体阴影会不同。</p>
+      {command.length > 256 && <p className="mc-output-note">较长指令建议放入命令方块执行；聊天框可能截断。也可去掉开头 /，写入 .mcfunction 文件。</p>}<p className="mc-output-note">图案贴图取自 <a href="https://github.com/AiverAiva/BannerCraft" target="_blank" rel="noopener noreferrer">BannerCraft ↗</a>（MIT）；预览为正面平面效果，游戏内旗帜和盾牌的立体阴影会不同。</p>
     </aside></div>
   </section>;
 }

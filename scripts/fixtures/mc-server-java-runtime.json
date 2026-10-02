@@ -1,0 +1,38 @@
+{
+  "verifiedAt": "2026-10-02",
+  "manifest": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+  "meaning": "Official launcher javaVersion.majorVersion, not a blanket claim about minimum Java or modded-server support. Each version metadata response was SHA-1 checked against the official manifest.",
+  "versions": [
+    { "id": "26.1", "majorVersion": 25, "component": "java-runtime-epsilon", "sha1": "84d0ff7bd4428695691af5a178edae22c7c83d89" },
+    { "id": "1.21.8", "majorVersion": 21, "component": "java-runtime-delta", "sha1": "403dee3925f64c7138b72a5302130829cb588784" },
+    { "id": "1.21.5", "majorVersion": 21, "component": "java-runtime-delta", "sha1": "5b1e09e69f4f9c650ba11c36d8b27fd0153e4e82" },
+    { "id": "1.20.6", "majorVersion": 21, "component": "java-runtime-delta", "sha1": "84c5b02d36a9be4560597687f9e2d19d69fada5d" },
+    { "id": "1.20.4", "majorVersion": 17, "component": "java-runtime-gamma", "sha1": "bff1278922bca138b7722385a81366f3077abffa" },
+    { "id": "1.17", "majorVersion": 16, "component": "java-runtime-alpha", "sha1": "0d9ace8a2ecfd1f4c782786f4b985a499240ff12" },
+    { "id": "1.16.5", "majorVersion": 8, "component": "jre-legacy", "sha1": "fba9f7833e858a1257d810d21a3a9e3c967f9077" },
+    { "id": "1.12.2", "majorVersion": 8, "component": "jre-legacy", "sha1": "832d95b9f40699d4961394dcf6cf549e65f15dc5" },
+    { "id": "1.8.9", "majorVersion": 8, "component": "jre-legacy", "sha1": "d546f1707a3f2b7d034eece5ea2e311eda875787" }
+  ],
+  "releaseNotes": [
+    { "from": "26.1", "requiredJava": 25, "url": "https://www.minecraft.net/en-us/article/minecraft-java-edition-26-1" },
+    { "from": "1.20.5", "requiredJava": 21, "url": "https://www.minecraft.net/en-us/article/minecraft-java-edition-1-20-5" },
+    { "from": "1.18", "requiredJava": 17, "url": "https://feedback.minecraft.net/hc/en-us/articles/4415128577293-Minecraft-Java-Edition-1-18" },
+    { "from": "1.17", "requiredJava": 16, "url": "https://feedback.minecraft.net/hc/en-us/articles/4402626897165-Minecraft-Caves-Cliffs-Part-1-1-17-Java" }
+  ],
+  "jvmSources": [
+    "https://docs.oracle.com/javase/8/docs/technotes/tools/windows/java.html",
+    "https://docs.oracle.com/en/java/javase/16/docs/specs/man/java.html",
+    "https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html",
+    "https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html",
+    "https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html",
+    "https://www.oracle.com/java/technologies/javase/9-relnotes.html",
+    "https://inside.java/2023/11/28/gen-zgc-explainer/",
+    "https://openjdk.org/projects/jdk/23",
+    "https://inside.java/2024/11/01/jep490-target-jdk24/",
+    "https://mail.openjdk.org/pipermail/hotspot-runtime-dev/2025-October/082324.html",
+    "https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/g1_gc_tuning.html",
+    "https://www.oracle.com/java/technologies/javase/8u20-relnotes.html",
+    "https://www.oracle.com/java/technologies/javase/8u92-relnotes.html",
+    "https://www.oracle.com/java/technologies/javase/8u191-relnotes.html"
+  ]
+}
