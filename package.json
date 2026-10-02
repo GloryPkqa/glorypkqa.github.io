@@ -9,6 +9,7 @@
     "check:mc": "node scripts/verify-mc-commands.mjs",
     "check:expanded": "node scripts/verify-mc-expanded.mjs",
     "check:potion": "node scripts/verify-mc-potion.mjs",
+    "check:player": "node scripts/verify-player-lookup.mjs",
     "start": "next start",
     "lint": "eslint"
   },
