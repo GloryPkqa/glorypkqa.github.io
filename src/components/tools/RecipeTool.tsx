@@ -36,7 +36,7 @@ export default function RecipeTool({ version, catalog }: { version: string; cata
   const itemMap = useMemo(() => new Map(catalog?.items.map((entry) => [entry.name, entry]) ?? []), [catalog]);
   const craftable = useMemo(() => catalog?.items.filter((entry) => !!catalog.recipes?.[entry.name]?.length) ?? [], [catalog]);
   const activeGroup = GROUPS.find((entry) => entry.id === group) ?? GROUPS[0];
-  const search = query.trim().toLocaleLowerCase();
+  const search = query.trim().toLocaleLowerCase().replace(/^minecraft:/, "");
   const filtered = craftable.filter((entry) => {
     if (search) return `${entry.name} ${entry.displayName} ${entry.displayNameZh}`.toLocaleLowerCase().includes(search);
     if (group !== "all" && !(activeGroup.categories as readonly string[]).includes(entry.category)) return false;

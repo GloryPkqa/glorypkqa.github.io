@@ -60,11 +60,16 @@ for (const version of MC_VERSIONS) {
   coordinate.unmount();
   const effect = mount("EffectTool", { catalog: catalogs[version] });
   effect.edit(effect.all("input").find(n => n.props.type === "checkbox"), true);
-  for (const [value, seconds] of [["1.5",1],["0.1",1],["0",1],["-5",1],["9999999",1000000],["",1],["60",60]]) {
+  for (const [value, seconds] of [["1.5",1],["0.1",1],["0",1],["-5",1],["9999999",1000000],["60",60]]) {
     effect.edit(effect.all("input").find(n => n.props.type === "number"), value);
     assert.equal(effect.all("input").find(n => n.props.type === "number").props.value, seconds);
     assert.match(effect.commands()[0], new RegExp(`[dD]uration:${seconds * 20}[,}]`)); counts.numericBoundaries++;
   }
+  effect.edit(effect.all("input").find(n => n.props.type === "number"), "");
+  assert.equal(effect.all("input").find(n => n.props.type === "number").props.value, "");
+  assert.equal(effect.commands().filter(command => command.startsWith("/give ")).length, 0);
+  assert.equal(effect.nodes().find(n => n.props.className === "mc-copy-button").props.disabled, true);
+  counts.numericBoundaries++;
   effect.unmount();
   const block = mount("BlockTool", { version, catalog: catalogs[version] });
   block.nodes().find(n => n.props.label === "起点").props.onChange(["-2","-2","-2"]);

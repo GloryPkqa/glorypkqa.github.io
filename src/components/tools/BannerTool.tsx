@@ -19,8 +19,7 @@ export default function BannerTool({ version }: { version: string }) {
   const [color, setColor] = useState("lime");
   const [group, setGroup] = useState<(typeof GROUPS)[number]["id"]>("stripes");
   const [layers, setLayers] = useState<BannerLayer[]>([{ pattern: "stripe_center", color: "lime" }, { pattern: "circle", color: "white" }]);
-  const { copy, isCopied } = useCopyFeedback();
-  const [copyError, setCopyError] = useState("");
+  const { copy, isCopied, isFailed } = useCopyFeedback();
   const validLayers = layers.filter((layer) => availableBannerPatterns(version).some(([id]) => id === layer.pattern));
   const patterns = availableBannerPatterns(version).filter(([, , , category]) => category === group);
   const command = makeBannerCommand({ version, target, base, layers: validLayers });
@@ -31,11 +30,6 @@ export default function BannerTool({ version }: { version: string }) {
     if (other < 0 || other >= next.length) return;
     [next[index], next[other]] = [next[other], next[index]];
     setLayers(next);
-  }
-
-  async function copyBanner() {
-    const result = await copy(command);
-    if (result !== null) setCopyError(result ? "" : "复制失败，请手动选中指令复制。");
   }
 
   return <section className="mc-section" id="banner" aria-labelledby="banner-heading">
@@ -54,7 +48,7 @@ export default function BannerTool({ version }: { version: string }) {
       {validLayers.length !== layers.length && <p className="mc-output-warning">所选版本不支持部分图案；它们不会进入当前指令。</p>}
     </div><aside className="mc-output-panel mc-banner-output"><div className="mc-output-top"><span><i /> LIVE DESIGN</span><span>JAVA · {version}</span></div>
       <div className="mc-banner-scene"><div className={`mc-banner-artifact is-${target}`}><div className="mc-banner-cloth" style={{ backgroundColor: bannerColor(base)?.hex }}>{validLayers.map((layer, index) => <PatternMask key={`${index}-${layer.pattern}-${layer.color}`} pattern={layer.pattern} color={layer.color} />)}</div>{target === "banner" && <span className="mc-banner-pole" />}{target === "shield" && <span className="mc-banner-shield-rim" />}</div><div className="mc-banner-preview-caption"><span>{target === "banner" ? "BANNER" : "SHIELD"}</span><strong>{bannerColor(base)?.zh} · {validLayers.length} 层图案</strong></div></div>
-      <div className="mc-code-heading"><span>生成的指令</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{command}</code></pre><button type="button" className="mc-copy-button" onClick={copyBanner}>{isCopied(command) ? "已复制 ✓" : "复制旗帜指令 ↗"}</button>{copyError && <p className="mc-output-warning" role="alert">{copyError}</p>}
+      <div className="mc-code-heading"><span>生成的指令</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{command}</code></pre><button type="button" className="mc-copy-button" onClick={() => copy(command)}>{isCopied(command) ? "已复制 ✓" : "复制旗帜指令 ↗"}</button>{isFailed(command) && <p className="mc-output-warning" role="alert">复制失败，请重试或手动选中指令复制。</p>}
       <p className="mc-output-note">图案贴图取自 <a href="https://github.com/AiverAiva/BannerCraft" target="_blank" rel="noopener noreferrer">BannerCraft ↗</a>（MIT）；预览为正面平面效果，游戏内旗帜和盾牌的立体阴影会不同。</p>
     </aside></div>
   </section>;

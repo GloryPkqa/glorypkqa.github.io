@@ -51,6 +51,7 @@ pnpm check:third
 pnpm check:fourth
 pnpm check:fifth
 python3 scripts/verify-mc-fifth-zips.py
+pnpm check:sixth
 pnpm lint
 pnpm build
 ```
@@ -63,6 +64,8 @@ pnpm build
 `check:fourth` 检查 9 个版本的坐标和填充范围；`pnpm check:native` 用 Mojang 官方 Java 26.1 解析器独立验证物品组件、药水、旗帜、文字、指令、配方、战利品表和数据包元信息。需要 JDK 25 与 Python 3；可传 `--java-home <目录> --python <可执行文件>`。首次下载 SHA-1 校验的官方服务器 JAR，内部依赖逐个 SHA-256 校验，缓存于忽略提交的 coverage。检查只调用解析器与范围判断，不启动服务器、不接受 EULA、不创建世界或执行指令。两项均加入 PR 和发布流程。官方解析覆盖 26.1，其他版本仍需对应游戏的实际运行抽测。
 
 `check:fifth` 检查文字编辑后逐字颜色的位置、复制失败与重试、数据包下载提示及资源清理、导航修饰键和离开页面后的定时器取消。随后运行 Python ZIP 检查，使用标准库独立解压该交互检查导出的 7 个版本数据包，核对 CRC、UTF-8 中文、路径和 JSON 内容；两项已加入发布与 PR 流程。
+
+`check:sixth` 检查完整物品 ID 与酿造材料 ID 搜索、药水数字清空重填与跨版本恢复、已确认配方属性在编辑草稿和导入失败时的保留、旗帜复制错误绑定，以及低版本预览与经典颜色输出的一致性。已加入 PR 与发布流程。
 
 ## 数据与致谢
 

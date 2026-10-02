@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useCopyFeedback from "@/lib/useCopyFeedback";
 import TextStyleControls from "@/components/tools/TextStyleControls";
-import { coloredParts, defaultTextStyle, remapTextColors, textComponent } from "@/lib/mc/textColors";
+import { coloredParts, defaultTextStyle, previewTextParts, remapTextColors, textComponent } from "@/lib/mc/textColors";
 
 const COLORS = [
   ["黑色", "0", "#000000"], ["深蓝", "1", "#0000AA"], ["深绿", "2", "#00AA00"], ["青色", "3", "#00AAAA"],
@@ -19,6 +19,7 @@ export default function ColorTool({ version }: { version: string }) {
   const { copy, copyLabel } = useCopyFeedback();
   const cleanMessage = message;
   const parts = coloredParts(cleanMessage, style);
+  const previewParts = previewTextParts(parts, version);
   const modifiers = `${style.bold ? "l" : ""}${style.italic ? "o" : ""}`;
   const outputs = [
     { title: "Java /tellraw 指令", detail: version.startsWith("1.") && Number(version.split(".")[1]) <= 20 ? "旧版 · JSON" : "新版 · SNBT", value: `/tellraw @a ${textComponent(parts, version)}` },
@@ -37,7 +38,7 @@ export default function ColorTool({ version }: { version: string }) {
       <TextStyleControls label="聊天文字" text={cleanMessage} style={style} onChange={setStyle} />
       <p className="mc-field-hint">RGB、渐变、AB 交替和逐字色会写进 /tellraw。传统 § 与插件 & 代码只保留上方经典调色盘选中的颜色。输入中的 § / & 格式码可能被游戏或插件再次解释。</p>
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> LIVE PREVIEW</span><span>JAVA · {version}</span></div>
-      <div className="mc-chat-preview"><span className="mc-chat-label">MINECRAFT CHAT</span><div>{parts.length ? parts.map((part, index) => <span key={index} style={{ color: part.color, fontWeight: part.bold ? 800 : 400, fontStyle: part.italic ? "italic" : "normal" }}>{part.text}</span>) : <span>预览文字</span>}</div></div>
+      <div className="mc-chat-preview"><span className="mc-chat-label">MINECRAFT CHAT</span><div>{previewParts.length ? previewParts.map((part, index) => <span key={index} style={{ color: part.color, fontWeight: part.bold ? 800 : 400, fontStyle: part.italic ? "italic" : "normal" }}>{part.text}</span>) : <span>预览文字</span>}</div></div>
       {outputs.map((output) => <div className="mc-color-result" key={output.title}><div className="mc-code-heading"><span>{output.title}</span><span>{output.detail}</span></div><pre className="mc-code-output"><code>{output.value}</code></pre><button className="mc-copy-button" type="button" onClick={() => copy(output.value)}>{copyLabel(output.value, "复制代码 ↗")}</button></div>)}
     </aside></div>
   </section>;

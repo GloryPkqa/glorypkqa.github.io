@@ -65,19 +65,24 @@ export function modernSnbtString(value: string) {
   return `'${value.replace(/['\\\u0000-\u001f]/g, (char) => char === "'" || char === "\\" ? `\\${char}` : `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`)}'`;
 }
 
+const CLASSIC_TEXT_COLORS = { black: "#000000", dark_blue: "#0000AA", dark_green: "#00AA00", dark_aqua: "#00AAAA", dark_red: "#AA0000", dark_purple: "#AA00AA", gold: "#FFAA00", gray: "#AAAAAA", dark_gray: "#555555", blue: "#5555FF", green: "#55FF55", aqua: "#55FFFF", red: "#FF5555", light_purple: "#FF55FF", yellow: "#FFFF55", white: "#FFFFFF" };
+const classicTextVersion = (version: string) => version.startsWith("1.") && Number(version.split(".")[1]) < 16;
+
+function nearestClassicColor(hex: string) {
+  const rgb = [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16));
+  const distance = (value: string) => [1, 3, 5].reduce((sum, at, index) => sum + (rgb[index] - Number.parseInt(value.slice(at, at + 2), 16)) ** 2, 0);
+  return Object.entries(CLASSIC_TEXT_COLORS).sort((a, b) => distance(a[1]) - distance(b[1]))[0];
+}
+
+export function previewTextParts(parts: ColoredPart[], version: string): ColoredPart[] {
+  return classicTextVersion(version) ? parts.map((part) => ({ ...part, color: nearestClassicColor(part.color)[1] })) : parts;
+}
+
 export function textComponent(parts: ColoredPart[], version: string) {
   const entries = parts.length ? parts : [{ text: "", color: "#FFFFFF", bold: false, italic: false }];
   if (version.startsWith("1.") && Number(version.split(".")[1]) <= 20) {
     // Hex text colors arrived in Java 1.16. Earlier versions need a named dye.
-    const legacyColors = { black: "#000000", dark_blue: "#0000AA", dark_green: "#00AA00", dark_aqua: "#00AAAA", dark_red: "#AA0000", dark_purple: "#AA00AA", gold: "#FFAA00", gray: "#AAAAAA", dark_gray: "#555555", blue: "#5555FF", green: "#55FF55", aqua: "#55FFFF", red: "#FF5555", light_purple: "#FF55FF", yellow: "#FFFF55", white: "#FFFFFF" };
-    const colorForVersion = (hex: string) => {
-      if (Number(version.split(".")[1]) >= 16) return hex;
-      const rgb = [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16));
-      return Object.entries(legacyColors).sort((a, b) => {
-        const distance = (value: string) => [1, 3, 5].reduce((sum, at, index) => sum + (rgb[index] - Number.parseInt(value.slice(at, at + 2), 16)) ** 2, 0);
-        return distance(a[1]) - distance(b[1]);
-      })[0][0];
-    };
+    const colorForVersion = (hex: string) => classicTextVersion(version) ? nearestClassicColor(hex)[0] : hex;
     const content = entries.map(({ text, color, bold, italic }) => ({ text, color: colorForVersion(color), bold, italic }));
     return JSON.stringify(content.length === 1 ? content[0] : content);
   }

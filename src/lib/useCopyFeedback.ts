@@ -40,5 +40,6 @@ export default function useCopyFeedback() {
   }
 
   const isCopied = (value: string) => !!value && value === copiedValue;
-  return { copy, isCopied, copyLabel: (value: string, label = "复制指令 ↗") => isCopied(value) ? "已复制 ✓" : value && value === failedValue ? "复制失败，点此重试或手动复制" : label };
+  const isFailed = (value: string) => !!value && value === failedValue;
+  return { copy, isCopied, isFailed, copyLabel: (value: string, label = "复制指令 ↗") => isCopied(value) ? "已复制 ✓" : isFailed(value) ? "复制失败，点此重试或手动复制" : label };
 }

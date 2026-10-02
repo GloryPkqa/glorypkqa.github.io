@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useCopyFeedback from "@/lib/useCopyFeedback";
 import TextStyleControls from "@/components/tools/TextStyleControls";
-import { coloredParts, defaultTextStyle, remapTextColors, textComponent, type TextStyle } from "@/lib/mc/textColors";
+import { coloredParts, defaultTextStyle, previewTextParts, remapTextColors, textComponent, type TextStyle } from "@/lib/mc/textColors";
 import { versionAtLeast } from "@/lib/mc/give";
 
 type Channel = "title" | "subtitle" | "actionbar";
@@ -36,7 +36,7 @@ export default function TitleTool({ version }: { version: string }) {
   ] : [];
 
   function preview(channel: Channel, fallback: string) {
-    const parts = coloredParts(texts[channel] || fallback, styles[channel]);
+    const parts = previewTextParts(coloredParts(texts[channel] || fallback, styles[channel]), version);
     return parts.map((part, index) => <span key={index} style={{ color: part.color, fontWeight: part.bold ? 800 : undefined, fontStyle: part.italic ? "italic" : undefined }}>{part.text}</span>);
   }
 

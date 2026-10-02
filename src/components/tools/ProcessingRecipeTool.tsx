@@ -50,15 +50,15 @@ export default function ProcessingRecipeTool({ version, catalog }: { version: st
     return id.startsWith("#") ? `标签 ${id}` : `${items.get(id)?.displayNameZh ?? id} · ${items.get(id)?.displayName ?? id}`;
   };
   const all = catalog?.processingRecipes ?? [];
-  const search = query.trim().toLocaleLowerCase();
+  const search = query.trim().toLocaleLowerCase().replace(/^minecraft:/, "");
   const visible = all.filter((entry) => stationFor(entry) === station && (method === "all" || entry.type === method)).filter((entry) => {
     if (!search) return true;
     const ingredient = [...itemIds(entry.ingredient), ...itemIds(entry.base), ...itemIds(entry.addition), ...itemIds(entry.template)];
-    const words = [entry.id, name(entry.result), ...ingredient.map((id) => name(id))].join(" ").toLocaleLowerCase();
+    const words = [entry.id, entry.result ?? "", name(entry.result), ...ingredient, ...ingredient.map((id) => name(id))].join(" ").toLocaleLowerCase();
     return words.includes(search);
   });
   const active = visible.find((entry) => entry.id === selected) ?? visible[0];
-  const brew = BREWING.filter((entry) => items.has(entry.ingredient) && `${entry.base} ${entry.result} ${entry.english} ${name(entry.ingredient)}`.toLocaleLowerCase().includes(search));
+  const brew = BREWING.filter((entry) => items.has(entry.ingredient) && `${entry.base} ${entry.result} ${entry.english} ${entry.ingredient} ${name(entry.ingredient)}`.toLocaleLowerCase().includes(search));
   const [selectedBrew, setSelectedBrew] = useState(0);
   const activeBrew = brew[Math.min(selectedBrew, Math.max(brew.length - 1, 0))];
 
