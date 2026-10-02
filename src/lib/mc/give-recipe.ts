@@ -2,7 +2,7 @@ import { versionAtLeast } from "@/lib/mc/give";
 
 export type ImportedGiveResult = { item: string; count: number; components: Record<string, unknown> };
 
-function parseSnbt(source: string): unknown {
+function parseSnbt(source: string, modern: boolean): unknown {
   let at = 0;
   const skip = () => { while (/\s/.test(source[at] ?? "")) at++; };
   const read = (depth: number): unknown => {
@@ -17,7 +17,13 @@ function parseSnbt(source: string): unknown {
         if (char === first) return value;
         if (char === "\\") {
           if (at >= source.length) break;
-          value += source[at++];
+          const escaped = source[at++];
+          if (escaped === first || escaped === "\\") value += escaped;
+          else if (modern && escaped === "u" && /^[a-fA-F0-9]{4}$/.test(source.slice(at, at + 4))) {
+            value += String.fromCharCode(Number.parseInt(source.slice(at, at + 4), 16)); at += 4;
+          } else if (modern && escaped in { b: 1, t: 1, n: 1, f: 1, r: 1, s: 1 }) {
+            value += ({ b: "\b", t: "\t", n: "\n", f: "\f", r: "\r", s: " " } as Record<string, string>)[escaped];
+          } else throw new Error("指令中有不支持的字符串转义。");
         } else value += char;
       }
       throw new Error("指令中有未闭合的引号。");
@@ -37,6 +43,8 @@ function parseSnbt(source: string): unknown {
             ? read(depth + 1)
             : (() => { const start = at; while (at < source.length && source[at] !== ":") at++; return source.slice(start, at).trim(); })();
           if (typeof key !== "string" || !key || source[at++] !== ":") throw new Error("指令属性格式不正确。");
+          if (Object.hasOwn(object, key)) throw new Error("指令中有重复属性。");
+          if (["__proto__", "constructor", "prototype"].includes(key)) throw new Error("指令中有不支持的属性名。");
           object[key] = read(depth + 1);
         }
         skip();
@@ -122,7 +130,7 @@ export function importGiveForRecipe(command: string, version: string): ImportedG
     const key = part.slice(0, separator).replace(/^minecraft:/, "");
     if (!["custom_name", "lore", "enchantments", "stored_enchantments", "unbreakable"].includes(key)) throw new Error(`暂不支持导入 ${key}；请使用本站 /give 工具生成的指令。`);
     if (`minecraft:${key}` in components) throw new Error(`重复的 ${key} 属性。`);
-    const value = parseSnbt(part.slice(separator + 1));
+    const value = parseSnbt(part.slice(separator + 1), versionAtLeast(version, "1.21.5"));
     if (key === "custom_name" || key === "lore") {
       const entries = key === "lore" ? value : [value];
       if (!Array.isArray(entries) || entries.some((entry) => version === "1.20.6" ? typeof entry !== "string" : !isObject(entry))) throw new Error("名称或描述的格式与所选版本不匹配。");

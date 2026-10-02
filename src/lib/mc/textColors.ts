@@ -31,7 +31,9 @@ export function coloredParts(text: string, style: TextStyle): ColoredPart[] {
   return parts;
 }
 
-function snbt(value: string) { return `'${value.replaceAll("\\", "\\\\").replaceAll("'", "\\'")}'`; }
+export function modernSnbtString(value: string) {
+  return `'${value.replace(/['\\\u0000-\u001f]/g, (char) => char === "'" || char === "\\" ? `\\${char}` : `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`)}'`;
+}
 
 export function textComponent(parts: ColoredPart[], version: string) {
   const entries = parts.length ? parts : [{ text: "", color: "#FFFFFF", bold: false, italic: false }];
@@ -49,6 +51,6 @@ export function textComponent(parts: ColoredPart[], version: string) {
     const content = entries.map(({ text, color, bold, italic }) => ({ text, color: colorForVersion(color), bold, italic }));
     return JSON.stringify(content.length === 1 ? content[0] : content);
   }
-  const content = entries.map(({ text, color, bold, italic }) => `{text:${snbt(text)},color:${snbt(color)},bold:${bold},italic:${italic}}`);
+  const content = entries.map(({ text, color, bold, italic }) => `{text:${modernSnbtString(text)},color:${modernSnbtString(color)},bold:${bold},italic:${italic}}`);
   return content.length === 1 ? content[0] : `[${content.join(",")}]`;
 }

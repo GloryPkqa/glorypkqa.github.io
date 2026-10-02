@@ -1,3 +1,5 @@
+import { modernSnbtString } from "@/lib/mc/textColors";
+
 export type McItem = { name: string; displayName: string; displayNameZh: string; stackSize: number; category: string; icon: boolean; iconUrl: string | null };
 export type McEnchantment = {
   name: string;
@@ -53,7 +55,7 @@ function legacyText(value: string) {
 }
 
 function modernText(value: string) {
-  return `{text:${snbtString(value)},italic:false}`;
+  return `{text:${modernSnbtString(value)},italic:false}`;
 }
 
 export function makeGiveCommand(input: {

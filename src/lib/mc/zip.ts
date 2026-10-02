@@ -16,7 +16,7 @@ export function zipFiles(files: { name: string; content: string }[]) {
   }
 
   for (const file of files) {
-    if (!file.name || file.name.startsWith("/") || file.name.includes("..") || file.name.includes("\\")) throw new Error("ZIP 路径无效");
+    if (!file.name || file.name.startsWith("/") || /^[a-z]:/i.test(file.name) || file.name.split("/").some((part) => part === ".." || part === ".") || file.name.includes("\\")) throw new Error("ZIP 路径无效");
     const name = encoder.encode(file.name);
     const body = encoder.encode(file.content);
     const crc = crc32(body);

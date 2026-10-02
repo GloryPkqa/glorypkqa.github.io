@@ -43,7 +43,7 @@ export function bannerPattern(id: string) { return patternMap.get(id); }
 export function bannerColor(id: string) { return BANNER_COLORS.find((entry) => entry.id === id); }
 export function availableBannerPatterns(version: string) {
   const [major, minor, patch] = version.split(".").map(Number);
-  const modern = major > 1 || minor > 20 || (minor === 20 && patch >= 5);
+  const modern = major > 1 || minor >= 21;
   const piglin = major > 1 || minor > 16 || (minor === 16 && patch >= 2);
   return BANNER_PATTERNS.filter(([id]) => (modern || (id !== "flow" && id !== "guster")) && (piglin || id !== "piglin"));
 }

@@ -26,3 +26,4 @@ jobs:
       - run: pnpm check:expanded
       - run: pnpm check:potion
       - run: pnpm check:player
+      - run: pnpm check:audit

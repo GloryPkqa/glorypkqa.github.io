@@ -17,7 +17,7 @@ export function createDataPackFiles(input: PackInput) {
   const errors: string[] = [];
   if (!FORMATS[input.version]) errors.push("该版本暂不支持数据包。");
   if (!input.title.trim()) errors.push("请填写数据包名称。");
-  if (!slug.test(input.namespace)) errors.push("命名空间只能包含小写字母、数字、下划线、点和连字符。");
+  if (!slug.test(input.namespace) || input.namespace === "." || input.namespace === "..") errors.push("命名空间只能包含小写字母、数字、下划线、点和连字符，不能单独使用点。");
   if (!input.recipeEnabled && !input.lootEnabled) errors.push("请至少启用一种内容。");
   const recipeName = input.recipeName.trim();
   const lootName = input.lootName.trim();
@@ -28,6 +28,7 @@ export function createDataPackFiles(input: PackInput) {
   const grid = input.grid.map(itemId);
   const materials = grid.filter(Boolean);
   if (input.recipeEnabled) {
+    if (grid.length !== 9) errors.push("配方需要完整的九宫格材料。");
     if (!hasItem(input.result)) errors.push("配方产物不在当前版本的物品目录中。");
     if (input.resultComponents && Object.keys(input.resultComponents).length && !versionAtLeast(input.version, "1.20.5")) errors.push("当前版本的工作台配方不支持带属性的产物。");
     if (!materials.length) errors.push("请至少放入一种配方材料。");
@@ -59,9 +60,11 @@ export function createDataPackFiles(input: PackInput) {
     } else {
       const usedRows = [0, 1, 2].filter((row) => grid.slice(row * 3, row * 3 + 3).some(Boolean));
       const usedColumns = [0, 1, 2].filter((column) => grid.some((id, index) => index % 3 === column && id));
+      const rows = Array.from({ length: usedRows.at(-1)! - usedRows[0] + 1 }, (_, index) => usedRows[0] + index);
+      const columns = Array.from({ length: usedColumns.at(-1)! - usedColumns[0] + 1 }, (_, index) => usedColumns[0] + index);
       const keys = new Map<string, string>();
       const alphabet = "ABCDEFGHI";
-      const pattern = usedRows.map((row) => usedColumns.map((column) => {
+      const pattern = rows.map((row) => columns.map((column) => {
         const id = grid[row * 3 + column];
         if (!id) return " ";
         if (!keys.has(id)) keys.set(id, alphabet[keys.size]);

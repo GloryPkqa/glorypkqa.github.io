@@ -17,7 +17,7 @@ export default function ThemeToggle() {
   function toggleTheme() {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
-    window.localStorage.setItem("pkqa-theme", next);
+    try { window.localStorage.setItem("pkqa-theme", next); } catch { /* Keep switching usable when browser storage is blocked or full. */ }
     window.dispatchEvent(new Event("pkqa-theme-change"));
   }
 

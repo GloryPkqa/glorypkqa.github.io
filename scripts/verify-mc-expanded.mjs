@@ -1,17 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-
-const require = createRequire(import.meta.url);
-const ts = require("typescript");
-
-function loadTs(relative, imports = {}) {
-  const source = readFileSync(new URL(relative, import.meta.url), "utf8");
-  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const exports = {};
-  new Function("exports", "require", compiled)(exports, (id) => imports[id] ?? require(id));
-  return exports;
-}
+import { loadTs } from "./mc-test-runtime.mjs";
 
 const give = loadTs("../src/lib/mc/give.ts");
 const banner = loadTs("../src/lib/mc/banner.ts");
@@ -33,7 +22,8 @@ const newer = JSON.parse(readFileSync(new URL("../public/mc-data/1.17.json", imp
 assert.ok(!old.items.some((item) => item.name === "copper_ingot"));
 assert.ok(newer.items.some((item) => item.name === "copper_ingot"));
 assert.ok(!banner.availableBannerPatterns("1.16.5").some(([id]) => id === "flow"));
-assert.ok(banner.availableBannerPatterns("1.20.6").some(([id]) => id === "flow"));
+assert.ok(!banner.availableBannerPatterns("1.20.6").some(([id]) => id === "flow"));
+assert.ok(banner.availableBannerPatterns("1.21.5").some(([id]) => id === "flow"));
 assert.match(banner.makeBannerCommand({ version: "1.16.5", target: "banner", base: "black", layers: [{ pattern: "circle", color: "white" }] }), /BlockEntityTag:\{Patterns:/);
 assert.match(banner.makeBannerCommand({ version: "1.21.8", target: "shield", base: "black", layers: [{ pattern: "circle", color: "white" }] }), /base_color=black,banner_patterns=/);
 

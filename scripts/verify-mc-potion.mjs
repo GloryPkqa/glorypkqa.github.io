@@ -1,19 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
+import { loadTs } from "./mc-test-runtime.mjs";
 
-const require = createRequire(import.meta.url);
-const ts = require("typescript");
-function loadModule(path, dependencies = {}) {
-  const source = readFileSync(new URL(path, import.meta.url), "utf8");
-  const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const exports = {};
-  new Function("exports", "require", code)(exports, (name) => dependencies[name]);
-  return exports;
-}
-
-const give = loadModule("../src/lib/mc/give.ts");
-const { makePotionCommand } = loadModule("../src/lib/mc/potion.ts", { "@/lib/mc/give": give });
+const give = loadTs("../src/lib/mc/give.ts");
+const { makePotionCommand } = loadTs("../src/lib/mc/potion.ts", { "@/lib/mc/give": give });
 const effects = [{ name: "speed", duration: 60, level: 2 }, { name: "strength", duration: 30, level: 1 }];
 function sample(version, selected = effects) {
   const catalog = JSON.parse(readFileSync(new URL(`../public/mc-data/${version}.json`, import.meta.url), "utf8"));

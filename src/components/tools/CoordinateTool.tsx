@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { versionAtLeast } from "@/lib/mc/give";
 
 function floorBlock(value: number) { return Math.floor(value).toLocaleString("zh-CN"); }
 function direction(dx: number, dz: number) {
@@ -10,7 +11,7 @@ function direction(dx: number, dz: number) {
   return names[Math.round((angle + 360) % 360 / 45) % 8];
 }
 
-export default function CoordinateTool() {
+export default function CoordinateTool({ version }: { version: string }) {
   const [dimension, setDimension] = useState<"overworld" | "nether">("overworld");
   const [x, setX] = useState("800");
   const [y, setY] = useState("64");
@@ -19,15 +20,15 @@ export default function CoordinateTool() {
   const [targetY, setTargetY] = useState("64");
   const [targetZ, setTargetZ] = useState("-800");
   const [copied, setCopied] = useState(false);
-  const valid = [x, y, z].every((value) => value.trim() !== "" && Number.isFinite(Number(value)));
+  const valid = [x, y, z].every((value) => value.trim() !== "" && Number.isFinite(Number(value)) && Math.abs(Number(value)) <= Number.MAX_SAFE_INTEGER / 8);
   const hasTarget = [targetX, targetY, targetZ].some((value) => value.trim() !== "");
-  const targetValid = [targetX, targetY, targetZ].every((value) => value.trim() !== "" && Number.isFinite(Number(value)));
+  const targetValid = [targetX, targetY, targetZ].every((value) => value.trim() !== "" && Number.isFinite(Number(value)) && Math.abs(Number(value)) <= Number.MAX_SAFE_INTEGER / 8);
   const output = (() => {
     if (!valid) return null;
     const [fromX, fromY, fromZ] = [x, y, z].map(Number);
     const factor = dimension === "overworld" ? 1 / 8 : 8;
     const route = targetValid ? (() => { const [toX, toY, toZ] = [targetX, targetY, targetZ].map(Number); const dx = toX - fromX, dy = toY - fromY, dz = toZ - fromZ; return { horizontal: Math.hypot(dx, dz), spatial: Math.hypot(dx, dy, dz), dx, dy, dz, bearing: direction(dx, dz) }; })() : null;
-    return { portalX: Math.floor(fromX * factor), portalZ: Math.floor(fromZ * factor), route, command: `/tp @s ${Math.floor(fromX * factor)} ${Math.floor(fromY)} ${Math.floor(fromZ * factor)}` };
+    return { portalX: Math.floor(fromX * factor), portalZ: Math.floor(fromZ * factor), route, command: `/tp ${versionAtLeast(version, "1.12") ? "@s" : "@p"} ${Math.floor(fromX * factor)} ${Math.floor(fromY)} ${Math.floor(fromZ * factor)}` };
   })();
 
   async function copy() { if (!output) return; try { await navigator.clipboard.writeText(output.command); setCopied(true); window.setTimeout(() => setCopied(false), 1600); } catch { setCopied(false); } }

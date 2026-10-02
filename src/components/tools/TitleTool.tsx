@@ -24,7 +24,7 @@ export default function TitleTool({ version }: { version: string }) {
   const actionbarAvailable = versionAtLeast(version, "1.16");
   const activeChannel = actionbarAvailable || active !== "actionbar" ? active : "title";
   const texts = { title, subtitle, actionbar };
-  const targetValid = /^(@[aprs](\[[^\]]*\])?|[A-Za-z0-9_]{3,16})$/.test(target.trim());
+  const targetValid = /^(@[aprs](\[[^\]]*\])?|[A-Za-z0-9_]{3,16})$/.test(target.trim()) && (versionAtLeast(version, "1.12") || !target.trim().startsWith("@s"));
   const ticks = (seconds: number) => Math.max(0, Math.min(1200, Math.round((Number.isFinite(seconds) ? seconds : 0) * 20)));
   const component = (channel: Channel) => textComponent(coloredParts(texts[channel].trim(), styles[channel]), version);
   const commands = targetValid ? [
