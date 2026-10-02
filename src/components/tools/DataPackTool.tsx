@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createDataPackFiles, type LootEntry } from "@/lib/mc/datapack";
 import { importGiveForRecipe, type ImportedGiveResult } from "@/lib/mc/give-recipe";
 import { zipFiles } from "@/lib/mc/zip";
@@ -26,12 +26,29 @@ export default function DataPackTool({ version, catalog }: { version: string; ca
   const [rolls, setRolls] = useState(1);
   const [loot, setLoot] = useState<LootEntry[]>([{ item: "diamond", weight: 3, count: 1 }, { item: "iron_ingot", weight: 8, count: 4 }]);
   const [preview, setPreview] = useState("pack.mcmeta");
-  const [downloaded, setDownloaded] = useState(false);
+  const [downloadedPack, setDownloadedPack] = useState("");
+  const [downloadError, setDownloadError] = useState<{ signature: string; message: string } | null>(null);
+  const feedbackTimer = useRef<number | null>(null);
+  const downloadSequence = useRef(0);
+  const urlTimers = useRef(new Map<string, number>());
   const validItems = useMemo(() => new Set(catalog?.items.map((entry) => entry.name) ?? []), [catalog]);
   const catalogReady = catalog?.version === version;
   const activeImport = imported?.version === version && imported.item === result.replace(/^minecraft:/, "") ? imported : null;
   const pack = createDataPackFiles({ version, title, description, namespace, recipeEnabled, recipeName, recipeType, grid, result, resultCount, resultComponents: activeImport?.components, lootEnabled, lootName, rolls, loot, validItems });
   const previewFile = pack.files.find((entry) => entry.name === preview) ?? pack.files[0];
+  const signature = JSON.stringify([version, namespace, pack.files]);
+  const downloaded = downloadedPack === signature;
+
+  useEffect(() => {
+    const urls = urlTimers.current;
+    const sequence = downloadSequence;
+    return () => {
+      sequence.current++;
+      if (feedbackTimer.current !== null) window.clearTimeout(feedbackTimer.current);
+      for (const [url, timer] of urls) { window.clearTimeout(timer); URL.revokeObjectURL(url); }
+      urls.clear();
+    };
+  }, []);
 
   function applyGive(command: string) {
     try {
@@ -50,18 +67,26 @@ export default function DataPackTool({ version, catalog }: { version: string; ca
 
   function download() {
     if (pack.errors.length || !catalogReady) return;
-    const bytes = zipFiles(pack.files);
-    const blob = new Blob([new Uint8Array(bytes).buffer], { type: "application/zip" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${namespace}-${version.replaceAll(".", "_")}-datapack.zip`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    setDownloaded(true);
-    window.setTimeout(() => setDownloaded(false), 2000);
+    const request = ++downloadSequence.current;
+    if (feedbackTimer.current !== null) window.clearTimeout(feedbackTimer.current);
+    setDownloadedPack(""); setDownloadError(null);
+    let url = "", link: HTMLAnchorElement | undefined;
+    try {
+      const bytes = zipFiles(pack.files);
+      const blob = new Blob([new Uint8Array(bytes).buffer], { type: "application/zip" });
+      url = URL.createObjectURL(blob);
+      link = document.createElement("a");
+      link.href = url;
+      link.download = `${namespace}-${version.replaceAll(".", "_")}-datapack.zip`;
+      document.body.append(link); link.click();
+      const createdUrl = url;
+      urlTimers.current.set(createdUrl, window.setTimeout(() => { URL.revokeObjectURL(createdUrl); urlTimers.current.delete(createdUrl); }, 60_000));
+      setDownloadedPack(signature);
+      feedbackTimer.current = window.setTimeout(() => { if (request === downloadSequence.current) { setDownloadedPack(""); feedbackTimer.current = null; } }, 2000);
+    } catch {
+      if (url) URL.revokeObjectURL(url);
+      setDownloadError({ signature, message: "下载准备失败，请重试；如果浏览器阻止下载，请检查浏览器的下载设置。" });
+    } finally { link?.remove(); }
   }
 
   return <section className="mc-section" id="datapack" aria-labelledby="datapack-heading">
@@ -93,6 +118,7 @@ export default function DataPackTool({ version, catalog }: { version: string; ca
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> PACK PREVIEW</span><span>JAVA · {version}</span></div><div className="mc-pack-folder"><span>▤</span><strong>{title.trim() || "未命名数据包"}</strong><small>{catalogReady ? `${pack.files.length} 个文件` : "正在载入物品目录"} · Java {version}</small></div>
       {!catalogReady ? <p className="mc-output-note">正在载入当前版本的物品目录…</p> : pack.errors.length ? <div className="mc-pack-errors">{pack.errors.map((error) => <p key={error}>⚠ {error}</p>)}</div> : <><label className="mc-field"><span>预览文件</span><select className="mc-select" value={previewFile?.name ?? ""} onChange={(event) => setPreview(event.target.value)}>{pack.files.map((file) => <option key={file.name} value={file.name}>{file.name}</option>)}</select></label><pre className="mc-code-output mc-pack-code"><code>{previewFile?.content}</code></pre></>}
       <button className="mc-copy-button" type="button" disabled={!!pack.errors.length || !catalogReady} onClick={download}>{downloaded ? "ZIP 已准备下载 ✓" : "下载数据包 ZIP ↓"}</button>
+      {downloadError?.signature === signature && <p className="mc-output-warning" role="alert">{downloadError.message}</p>}
       <p className="mc-output-note">把 ZIP 原样放进单人世界的 datapacks 文件夹，然后执行 /reload。服务器需要管理员安装。配方与战利品表路径会随版本自动切换。</p>
     </aside></div>
   </section>;

@@ -11,7 +11,7 @@ export default function SummonTool({ version, catalog }: { version: string; cata
   const [entity, setEntity] = useState("zombie");
   const [positionMode, setPositionMode] = useState<"here" | "absolute">("here");
   const [point, setPoint] = useState<Point>(["0", "64", "0"]);
-  const { copy, isCopied } = useCopyFeedback();
+  const { copy, copyLabel } = useCopyFeedback();
 
   const entityId = entity.trim().toLowerCase().replace(/^minecraft:/, "");
   const matching = catalog?.entities?.find((entry) => entry.name === entityId);
@@ -35,7 +35,7 @@ export default function SummonTool({ version, catalog }: { version: string; cata
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> SUMMON OUTPUT</span><span>JAVA · {version}</span></div>
       <div className="mc-effect-display"><span aria-hidden="true">♞</span><strong>{matching?.displayName ?? "选择实体"}</strong><small>{matching ? `minecraft:${matching.name}` : "minecraft:..."}</small></div>
       {!positionValid && <p className="mc-output-warning">请输入整数：X、Z ≥ −30,000,000 且 &lt; 30,000,000；Y {versionAtLeast(version, "1.13") ? "≥ −20,000,000 且 < 20,000,000" : "为 −2,147,483,648 至 2,147,483,647"}。</p>}
-      {[{ id: "summon", label: "召唤实体", value: summon }, { id: "egg", label: "获取刷怪蛋", value: egg }].map((entry) => <div className="mc-color-result" key={entry.id}><div className="mc-code-heading"><span>{entry.label}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.value || (entry.id === "egg" && matching ? "// 此实体没有对应刷怪蛋" : "// 选择实体并填写有效坐标")}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.value} onClick={() => copy(entry.value)}>{isCopied(entry.value) ? "已复制 ✓" : "复制指令 ↗"}</button></div>)}
+      {[{ id: "summon", label: "召唤实体", value: summon }, { id: "egg", label: "获取刷怪蛋", value: egg }].map((entry) => <div className="mc-color-result" key={entry.id}><div className="mc-code-heading"><span>{entry.label}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.value || (entry.id === "egg" && matching ? "// 此实体没有对应刷怪蛋" : "// 选择实体并填写有效坐标")}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.value} onClick={() => copy(entry.value)}>{copyLabel(entry.value)}</button></div>)}
       <p className="mc-output-note">目录来自构建时的版本数据。个别实体可能受世界环境、难度或服务器规则限制；请在对应游戏版本中验证。</p>
     </aside></div>
   </section>;

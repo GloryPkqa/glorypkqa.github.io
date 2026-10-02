@@ -14,6 +14,7 @@
     "check:deep": "node scripts/verify-mc-deep.mjs",
     "check:third": "node scripts/verify-mc-third-pass.mjs",
     "check:fourth": "node scripts/verify-mc-fourth-pass.mjs",
+    "check:fifth": "node scripts/verify-mc-fifth-pass.mjs",
     "check:native": "node scripts/verify-mc-native.mjs",
     "start": "next start",
     "lint": "eslint"

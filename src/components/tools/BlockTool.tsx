@@ -34,7 +34,7 @@ export default function BlockTool({ version, catalog }: { version: string; catal
   const [end, setEnd] = useState<Point>(["9", "68", "9"]);
   const [fillMode, setFillMode] = useState<FillMode>("replace");
   const [setMode, setSetMode] = useState("replace");
-  const { copy, isCopied } = useCopyFeedback();
+  const { copy, copyLabel } = useCopyFeedback();
 
   const blockId = block.trim().toLowerCase().replace(/^minecraft:/, "");
   const matchingBlock = catalog?.blocks?.find((entry) => entry.name === blockId);
@@ -64,7 +64,7 @@ export default function BlockTool({ version, catalog }: { version: string; catal
       <p className="mc-field-hint">起点用于 /setblock；/fill 使用起点与终点，两个角可以按任意方向填写。X、Z ≥ −30,000,000 且 &lt; 30,000,000；Y 还需位于所在维度的建造高度内，区域需已加载。这里生成方块的默认状态；朝向、水浸等方块状态暂未加入。</p>
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> BUILD PREVIEW</span><span>JAVA · {version}</span></div><div className="mc-block-display"><span aria-hidden="true">▣</span><strong>{matchingBlock?.displayName ?? "选择方块"}</strong><small>{matchingBlock ? `minecraft:${matchingBlock.name}` : "minecraft:..."}</small><div>区域体积 <b>{volume !== null && Number.isSafeInteger(volume) ? volume.toLocaleString("zh-CN") : "—"}</b> 格</div></div>
       {!from && <p className="mc-output-warning">起点需填写整数：X、Z ≥ −30,000,000 且 &lt; 30,000,000；Y 为 −2,147,483,648 至 2,147,483,647。</p>}{!to && <p className="mc-output-warning">终点需填写整数：X、Z ≥ −30,000,000 且 &lt; 30,000,000；Y 为 −2,147,483,648 至 2,147,483,647。</p>}{volume !== null && volume > 32768 && <p className="mc-output-warning">⚠ 区域超过 32,768 方块默认上限。{limitHint}</p>}
-      {[{ key: "set", name: "放置单个方块", command: setCommand }, { key: "fill", name: "填充区域", command: fillCommand }].map((entry) => <div className="mc-color-result" key={entry.key}><div className="mc-code-heading"><span>{entry.name}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.command || "// 选择方块并填写有效坐标"}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.command} onClick={() => copy(entry.command)}>{isCopied(entry.command) ? "已复制 ✓" : "复制指令 ↗"}</button></div>)}
+      {[{ key: "set", name: "放置单个方块", command: setCommand }, { key: "fill", name: "填充区域", command: fillCommand }].map((entry) => <div className="mc-color-result" key={entry.key}><div className="mc-code-heading"><span>{entry.name}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.command || "// 选择方块并填写有效坐标"}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.command} onClick={() => copy(entry.command)}>{copyLabel(entry.command)}</button></div>)}
       <p className="mc-output-note">指令需要相应权限。区域填充会改变世界，请在游戏内检查坐标与方块后执行。</p>
     </aside></div>
   </section>;

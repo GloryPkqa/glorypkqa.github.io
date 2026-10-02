@@ -34,7 +34,7 @@ export default function WorldTool() {
   const [ticks, setTicks] = useState("1000");
   const [weather, setWeather] = useState<(typeof WEATHER)[number]["id"]>("clear");
   const [difficulty, setDifficulty] = useState<(typeof DIFFICULTY)[number]["id"]>("normal");
-  const { copy, isCopied } = useCopyFeedback();
+  const { copy, copyLabel } = useCopyFeedback();
 
   const timeValid = /^\d+$/.test(ticks.trim()) && Number(ticks) <= 23999;
   const time = timeValid ? Number(ticks) : null;
@@ -61,7 +61,7 @@ export default function WorldTool() {
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> WORLD OUTPUT</span><span>JAVA EDITION</span></div>
       <div className="mc-world-preview"><span aria-hidden="true">{selectedWeather.icon}</span><strong>{time === null ? "--:--" : clockTime(time)}</strong><small>{selectedWeather.label} · {selectedDifficulty.label}难度</small></div>
       {!timeValid && <p className="mc-output-warning">时间刻度需要是 0 到 23999 之间的整数。</p>}
-      {commands.map((entry) => <div className="mc-color-result" key={entry.id}><div className="mc-code-heading"><span>{entry.label}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.value || "// 输入有效时间刻度"}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.value} onClick={() => copy(entry.value)}>{isCopied(entry.value) ? "已复制 ✓" : "复制指令 ↗"}</button></div>)}
+      {commands.map((entry) => <div className="mc-color-result" key={entry.id}><div className="mc-code-heading"><span>{entry.label}</span><span>COMMAND</span></div><pre className="mc-code-output"><code>{entry.value || "// 输入有效时间刻度"}</code></pre><button className="mc-copy-button" type="button" disabled={!entry.value} onClick={() => copy(entry.value)}>{copyLabel(entry.value)}</button></div>)}
       <p className="mc-output-note">三条指令可分别执行，需要相应权限。天气命令仅影响允许天气变化的维度；服务器规则或插件可能覆盖设置。</p>
     </aside></div>
   </section>;

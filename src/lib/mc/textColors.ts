@@ -13,6 +13,31 @@ export function characters(text: string) {
     : Array.from(text);
 }
 
+// A text edit replaces one range. Keep paints on the unchanged prefix/suffix,
+// shift suffix positions, and leave newly inserted/replaced characters unpainted.
+export function remapTextColors(before: string, after: string, overrides: Record<number, string>, caret?: number | null) {
+  const oldChars = characters(before), newChars = characters(after);
+  let prefix = 0, suffix = 0;
+  // The caret identifies the edited range when repeated letters make a diff
+  // ambiguous. DOM caret offsets count UTF-16 units, paints count graphemes.
+  const boundary = typeof caret === "number" && Number.isInteger(caret) && caret >= 0 && caret <= after.length ? caret : null;
+  let offset = 0, caretIndex = 0;
+  if (boundary !== null) for (const char of newChars) { if (offset + char.length > boundary) break; offset += char.length; caretIndex++; }
+  const tail = boundary !== null && offset === boundary && before !== after ? newChars.length - caretIndex : -1;
+  const caretMatches = tail >= 0 && tail <= oldChars.length && newChars.slice(newChars.length - tail).join("") === oldChars.slice(oldChars.length - tail).join("");
+  if (caretMatches) suffix = tail;
+  while (prefix < oldChars.length - suffix && prefix < newChars.length - suffix && oldChars[prefix] === newChars[prefix]) prefix++;
+  if (!caretMatches) while (suffix < oldChars.length - prefix && suffix < newChars.length - prefix && oldChars[oldChars.length - 1 - suffix] === newChars[newChars.length - 1 - suffix]) suffix++;
+  const mapped: Record<number, string> = {};
+  for (const [key, color] of Object.entries(overrides)) {
+    const index = Number(key);
+    if (!Number.isInteger(index) || index < 0 || index >= oldChars.length) continue;
+    if (index < prefix) mapped[index] = color;
+    else if (index >= oldChars.length - suffix) mapped[index + newChars.length - oldChars.length] = color;
+  }
+  return mapped;
+}
+
 function blend(first: string, last: string, ratio: number) {
   const color = [1, 3, 5].map((index) => {
     const start = Number.parseInt(first.slice(index, index + 2), 16);

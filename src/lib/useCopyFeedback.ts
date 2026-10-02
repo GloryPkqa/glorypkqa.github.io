@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 // clipboard completion while the user edits a command or starts another copy.
 export default function useCopyFeedback() {
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
+  const [failedValue, setFailedValue] = useState<string | null>(null);
   const sequence = useRef(0);
   const timer = useRef<number | null>(null);
   useEffect(() => () => {
@@ -18,6 +19,7 @@ export default function useCopyFeedback() {
     const request = ++sequence.current;
     if (timer.current !== null) window.clearTimeout(timer.current);
     setCopiedValue(null);
+    setFailedValue(null);
     try {
       await navigator.clipboard.writeText(value);
       if (request !== sequence.current) return null;
@@ -32,9 +34,11 @@ export default function useCopyFeedback() {
     } catch {
       if (request !== sequence.current) return null;
       setCopiedValue(null);
+      setFailedValue(value);
       return false;
     }
   }
 
-  return { copy, isCopied: (value: string) => !!value && value === copiedValue };
+  const isCopied = (value: string) => !!value && value === copiedValue;
+  return { copy, isCopied, copyLabel: (value: string, label = "复制指令 ↗") => isCopied(value) ? "已复制 ✓" : value && value === failedValue ? "复制失败，点此重试或手动复制" : label };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useCopyFeedback from "@/lib/useCopyFeedback";
 import ThemeToggle from "@/components/ThemeToggle";
 import ColorTool from "@/components/tools/ColorTool";
@@ -47,22 +47,27 @@ const CATEGORY_ITEMS = [
 ];
 
 export function CopyButton({ value }: { value: string }) {
-  const { copy, isCopied } = useCopyFeedback();
-  return <button className="mc-copy-button" type="button" onClick={() => void copy(value)} disabled={!value}>{isCopied(value) ? "已复制 ✓" : "复制指令 ↗"}</button>;
+  const { copy, copyLabel } = useCopyFeedback();
+  return <button className="mc-copy-button" type="button" onClick={() => void copy(value)} disabled={!value}>{copyLabel(value)}</button>;
 }
 
-function CraftStartButton({ href }: { href: string }) {
+export function CraftStartButton({ href }: { href: string }) {
   const [playing, setPlaying] = useState(false);
+  const running = useRef(false);
+  const timers = useRef<number[]>([]);
+  useEffect(() => () => { running.current = false; timers.current.forEach((timer) => window.clearTimeout(timer)); }, []);
 
   function start(event: React.MouseEvent<HTMLAnchorElement>) {
+    if (event.button > 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.defaultPrevented) return;
     event.preventDefault();
-    if (playing) return;
+    if (running.current) return;
+    running.current = true;
     setPlaying(true);
-    window.setTimeout(() => {
+    timers.current.forEach((timer) => window.clearTimeout(timer));
+    timers.current = [window.setTimeout(() => {
       window.history.pushState(null, "", href);
       document.getElementById(href.slice(1))?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
-    }, 300);
-    window.setTimeout(() => setPlaying(false), 850);
+    }, 300), window.setTimeout(() => { running.current = false; setPlaying(false); timers.current = []; }, 850)];
   }
 
   return <a href={href} className={`mc-craft-button${playing ? " is-crafting" : ""}`} onClick={start}>
@@ -80,8 +85,8 @@ export function QuickReturn() {
     return () => window.removeEventListener("scroll", update);
   }, []);
   return <nav className={`mc-quick-return${visible ? " is-visible" : ""}`} aria-label="页面快速返回" aria-hidden={!visible}>
-    <a href="#top" tabIndex={visible ? 0 : -1} title="返回顶部" onClick={(event) => { event.preventDefault(); window.history.pushState(null, "", "#top"); window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }); }}><span aria-hidden="true">↑</span> 返回顶部</a>
-    <a href="#mc-directory-heading" tabIndex={visible ? 0 : -1} title="工具目录" onClick={(event) => { event.preventDefault(); document.getElementById("mc-directory-heading")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }); }}><span aria-hidden="true">▦</span> 工具目录</a>
+    <a href="#top" tabIndex={visible ? 0 : -1} title="返回顶部" onClick={(event) => { if (event.button > 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.defaultPrevented) return; event.preventDefault(); window.history.pushState(null, "", "#top"); window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }); }}><span aria-hidden="true">↑</span> 返回顶部</a>
+    <a href="#mc-directory-heading" tabIndex={visible ? 0 : -1} title="工具目录" onClick={(event) => { if (event.button > 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.defaultPrevented) return; event.preventDefault(); window.history.pushState(null, "", "#mc-directory-heading"); document.getElementById("mc-directory-heading")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }); }}><span aria-hidden="true">▦</span> 工具目录</a>
   </nav>;
 }
 

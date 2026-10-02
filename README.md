@@ -49,6 +49,8 @@ pnpm check:audit
 pnpm check:deep
 pnpm check:third
 pnpm check:fourth
+pnpm check:fifth
+python3 scripts/verify-mc-fifth-zips.py
 pnpm lint
 pnpm build
 ```
@@ -59,6 +61,8 @@ pnpm build
 `check:player` 检查玩家请求和超时；`check:audit` 做全版本生成、配方和交互回归；`check:deep` 检查切换版本与异常恢复；`check:third` 检查空格配色、方向计算、数值边界、异步复制、键盘导航和披风恢复。详见 [第三轮检测记录](docs/mc-third-qa-2026-10-02.md)。
 
 `check:fourth` 检查 9 个版本的坐标和填充范围；`pnpm check:native` 用 Mojang 官方 Java 26.1 解析器独立验证物品组件、药水、旗帜、文字、指令、配方、战利品表和数据包元信息。需要 JDK 25 与 Python 3；可传 `--java-home <目录> --python <可执行文件>`。首次下载 SHA-1 校验的官方服务器 JAR，内部依赖逐个 SHA-256 校验，缓存于忽略提交的 coverage。检查只调用解析器与范围判断，不启动服务器、不接受 EULA、不创建世界或执行指令。两项均加入 PR 和发布流程。官方解析覆盖 26.1，其他版本仍需对应游戏的实际运行抽测。
+
+`check:fifth` 检查文字编辑后逐字颜色的位置、复制失败与重试、数据包下载提示及资源清理、导航修饰键和离开页面后的定时器取消。随后运行 Python ZIP 检查，使用标准库独立解压该交互检查导出的 7 个版本数据包，核对 CRC、UTF-8 中文、路径和 JSON 内容；两项已加入发布与 PR 流程。
 
 ## 数据与致谢
 

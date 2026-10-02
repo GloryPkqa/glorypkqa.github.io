@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useCopyFeedback from "@/lib/useCopyFeedback";
 import TextStyleControls from "@/components/tools/TextStyleControls";
-import { coloredParts, defaultTextStyle, textComponent } from "@/lib/mc/textColors";
+import { coloredParts, defaultTextStyle, remapTextColors, textComponent } from "@/lib/mc/textColors";
 
 const COLORS = [
   ["黑色", "0", "#000000"], ["深蓝", "1", "#0000AA"], ["深绿", "2", "#00AA00"], ["青色", "3", "#00AAAA"],
@@ -16,7 +16,7 @@ export default function ColorTool({ version }: { version: string }) {
   const [message, setMessage] = useState("欢迎来到 Pkqa Center!");
   const [colorCode, setColorCode] = useState("a");
   const [style, setStyle] = useState(() => defaultTextStyle());
-  const { copy, isCopied } = useCopyFeedback();
+  const { copy, copyLabel } = useCopyFeedback();
   const cleanMessage = message;
   const parts = coloredParts(cleanMessage, style);
   const modifiers = `${style.bold ? "l" : ""}${style.italic ? "o" : ""}`;
@@ -30,7 +30,7 @@ export default function ColorTool({ version }: { version: string }) {
     <div className="mc-section-header"><div><span className="mc-overline">02 / TEXT STUDIO</span><h2 id="colors-heading">文字与颜色<span>生成器</span></h2></div><span className="mc-section-mark" aria-hidden="true">✧</span></div>
     <p className="mc-section-description">经典 16 色、RGB 渐变、AB 交替或手动指定每一段文字的颜色。实时预览，并复制对应版本的 /tellraw 指令。{version === "1.8.9" || version === "1.12.2" ? " 旧版本不支持 RGB，生成指令时会逐段匹配最接近的经典颜色。" : ""}</p>
     <div className="mc-lab-grid"><div className="mc-form-panel">
-      <label className="mc-field"><span>你的文字 <small>MESSAGE</small></span><textarea rows={3} value={message} maxLength={120} onChange={(event) => setMessage(event.target.value)} /></label>
+      <label className="mc-field"><span>你的文字 <small>MESSAGE</small></span><textarea rows={3} value={message} maxLength={120} onChange={(event) => { const next = event.target.value, caret = event.target.selectionStart; setStyle((previous) => ({ ...previous, overrides: remapTextColors(message, next, previous.overrides, caret) })); setMessage(next); }} /></label>
       <div className="mc-form-section-label"><span>01</span> 经典调色盘</div>
       <div className="mc-color-grid">{COLORS.map(([label, code, hex]) => <button key={code} type="button" className={`mc-color-swatch${colorCode === code && style.mode === "solid" ? " active" : ""}`} title={`${label} · §${code}`} aria-label={`${label} §${code}`} aria-pressed={colorCode === code && style.mode === "solid"} onClick={() => { setColorCode(code); setStyle({ ...style, colorA: hex, mode: "solid" }); }}><span style={{ backgroundColor: hex }} /><small>§{code}</small></button>)}</div>
       <div className="mc-form-section-label"><span>02</span> 自定义配色</div>
@@ -38,7 +38,7 @@ export default function ColorTool({ version }: { version: string }) {
       <p className="mc-field-hint">RGB、渐变、AB 交替和逐字色会写进 /tellraw。传统 § 与插件 & 代码只保留上方经典调色盘选中的颜色。输入中的 § / & 格式码可能被游戏或插件再次解释。</p>
     </div><aside className="mc-output-panel mc-color-output"><div className="mc-output-top"><span><i /> LIVE PREVIEW</span><span>JAVA · {version}</span></div>
       <div className="mc-chat-preview"><span className="mc-chat-label">MINECRAFT CHAT</span><div>{parts.length ? parts.map((part, index) => <span key={index} style={{ color: part.color, fontWeight: part.bold ? 800 : 400, fontStyle: part.italic ? "italic" : "normal" }}>{part.text}</span>) : <span>预览文字</span>}</div></div>
-      {outputs.map((output) => <div className="mc-color-result" key={output.title}><div className="mc-code-heading"><span>{output.title}</span><span>{output.detail}</span></div><pre className="mc-code-output"><code>{output.value}</code></pre><button className="mc-copy-button" type="button" onClick={() => copy(output.value)}>{isCopied(output.value) ? "已复制 ✓" : "复制代码 ↗"}</button></div>)}
+      {outputs.map((output) => <div className="mc-color-result" key={output.title}><div className="mc-code-heading"><span>{output.title}</span><span>{output.detail}</span></div><pre className="mc-code-output"><code>{output.value}</code></pre><button className="mc-copy-button" type="button" onClick={() => copy(output.value)}>{copyLabel(output.value, "复制代码 ↗")}</button></div>)}
     </aside></div>
   </section>;
 }
